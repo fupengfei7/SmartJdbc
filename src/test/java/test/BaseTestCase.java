@@ -2,9 +2,8 @@ package test;
 
 import javax.sql.DataSource;
 
-import io.itit.smartjdbc.SmartJdbcConfig;
+import io.itit.smartjdbc.datasource.ConnectionManager;
 import io.itit.smartjdbc.datasource.DriverManagerDataSource;
-import io.itit.smartjdbc.datasource.TransactionManager;
 import junit.framework.TestCase;
 
 /**
@@ -23,14 +22,14 @@ public abstract class BaseTestCase extends TestCase{
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		SmartJdbcConfig.addDataSource(createDriverManagerDataSource(dbName));
-		TransactionManager.startTransaction(true);
+		ConnectionManager.setDataSource(createDriverManagerDataSource(dbName));
+		ConnectionManager.startTransaction(true);
 	}
 	
 	@Override
 	protected void tearDown() throws Exception {
 		super.tearDown();
-		TransactionManager.commit();
+		ConnectionManager.commit();
 	}
 	//
 	private String getJdbcUrl(String dbName) {

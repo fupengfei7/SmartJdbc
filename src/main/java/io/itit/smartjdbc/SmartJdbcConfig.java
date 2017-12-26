@@ -4,19 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import javax.sql.DataSource;
-
 /**
  * 
  * @author skydu
  *
  */
 public class SmartJdbcConfig {
-
-	/**
-	 * 
-	 */
-	private static List<DataSource> dataSources=new ArrayList<>();
 	
 	/**
 	 * 
@@ -93,28 +86,6 @@ public class SmartJdbcConfig {
 	public static void setDaoInterceptors(List<DAOInterceptor> daoInterceptors) {
 		SmartJdbcConfig.daoInterceptors = daoInterceptors;
 	}
-	
-	/**
-	 * @return the dataSources
-	 */
-	public static List<DataSource> getDataSources() {
-		return dataSources;
-	}
-	/**
-	 * @param dataSources the dataSources to set
-	 */
-	public static void setDataSources(List<DataSource> dataSources) {
-		SmartJdbcConfig.dataSources = dataSources;
-	}
-	
-	/**
-	 * 
-	 * @param dataSource
-	 */
-	public static void addDataSource(DataSource dataSource) {
-		dataSources.add(dataSource);
-	}
-	
 	/**
 	 * 
 	 * @param interceptor
