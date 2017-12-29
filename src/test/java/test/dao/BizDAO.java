@@ -5,7 +5,7 @@ import java.lang.reflect.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.itit.smartjdbc.QueryTerms;
+import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.dao.SmartDAO;
 
@@ -40,7 +40,7 @@ public class BizDAO extends SmartDAO{
 	 * @param id
 	 */
 	public void deleteById(Class<?> domainClass,int id){
-		delete(domainClass,QueryTerms.create().where("id", id));
+		delete(domainClass,QueryWhere.create().where("id", id));
 	}
 	
 	/**
@@ -49,7 +49,7 @@ public class BizDAO extends SmartDAO{
 	 * @return
 	 */
 	public <T> T getById(Class<T> domainClass,int id){
-		return query(domainClass,QueryTerms.create().where("id",id));
+		return getDomain(domainClass,QueryWhere.create().where("id",id));
 	}
 	
 	/**
@@ -71,7 +71,7 @@ public class BizDAO extends SmartDAO{
 	 * @return
 	 */
 	public <T> T getByIdForUpdate(Class<T> domainClass,int id){
-		return query(domainClass,QueryTerms.create().where("id",id).whereSql(" for update"));
+		return getDomain(domainClass,QueryWhere.create().where("id",id).whereSql(" for update"));
 	}
 	//
 	/**

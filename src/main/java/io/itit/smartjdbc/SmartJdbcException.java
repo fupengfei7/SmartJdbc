@@ -22,8 +22,4 @@ public class SmartJdbcException extends RuntimeException{
 	public SmartJdbcException(String s){
 		super(s);
 	}
-	//
-	public SmartJdbcException(String s,Throwable e){
-		super(s,e);
-	}
 }

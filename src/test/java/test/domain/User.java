@@ -2,6 +2,7 @@ package test.domain;
 
 import java.util.Date;
 
+import io.itit.smartjdbc.annotations.DomainDefine;
 import io.itit.smartjdbc.annotations.ForeignKey;
 
 /**
@@ -9,6 +10,7 @@ import io.itit.smartjdbc.annotations.ForeignKey;
  * @author skydu
  *
  */
+@DomainDefine(domainClass=User.class)
 public class User extends BaseDomain{
 	//
 	public String name;

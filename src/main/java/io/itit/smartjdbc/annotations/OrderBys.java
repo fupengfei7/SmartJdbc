@@ -12,11 +12,15 @@ import java.lang.annotation.Target;
  * @author skydu
  *
  */
-@Target(ElementType.TYPE)  
-@Retention(RetentionPolicy.RUNTIME)  
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Inherited  
-public @interface DomainDefine {
-	public String comment() default "";
-	public Class<?> domainClass() default void.class;
+@Inherited
+public @interface OrderBys {
+	//
+	public static @interface OrderBy {
+		  public int orderType();
+		  public String sql();
+	}
+	public OrderBy[] orderBys() default {};
 }

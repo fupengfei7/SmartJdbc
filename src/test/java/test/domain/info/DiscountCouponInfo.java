@@ -9,7 +9,7 @@ import test.domain.DiscountCoupon;
  * @author skydu
  *
  */
-@DomainDefine(tableClass=DiscountCoupon.class)
+@DomainDefine(domainClass=DiscountCoupon.class)
 public class DiscountCouponInfo extends DiscountCoupon{
 
 	@DomainField(foreignKeyFields="createUserId",field="name")

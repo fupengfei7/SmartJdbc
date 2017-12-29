@@ -8,7 +8,9 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.SmartJdbcException;
+import io.itit.smartjdbc.connection.ConnectionHolder;
 import io.itit.smartjdbc.util.JdbcUtil;
 
 /**
@@ -18,138 +20,101 @@ import io.itit.smartjdbc.util.JdbcUtil;
  */
 public class ConnectionManager {
 	//
-	private static final Logger logger=LoggerFactory.getLogger(ConnectionManager.class);
-	/**
-	 * 
-	 */
-	private static DataSource dataSource;
-	/**
-	 * 
-	 */
-	private static ThreadLocal<ConnectionHolder> connectionHolder = new ThreadLocal<>();
+	private static Logger logger = LoggerFactory.getLogger(ConnectionManager.class);
 	//
-	private static Integer transactionIsolationLevel;
+	private static ThreadLocal<ConnectionHolder> connectionHolder = new ThreadLocal<>();
 	/**
 	 * 
 	 * @param useTransaction
 	 */
-	public static void startTransaction(boolean useTransaction){
-		ConnectionHolder holder=new ConnectionHolder();
-		holder.useTransaction=useTransaction;
+	public static void startTransaction(boolean useTransaction) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("startTransaction useTransaction:{}", useTransaction);
+		}
+		ConnectionHolder holder = new ConnectionHolder();
+		holder.setUseTransaction(useTransaction);
 		connectionHolder.set(holder);
 	}
-	
+
 	/**
 	 * 
 	 */
-	public static void endTransaction() {
-		ConnectionHolder holder=connectionHolder.get();
-		connectionHolder.set(null);
-		if(holder==null){
-			return;
-		}
-		JdbcUtil.close(holder.connection);
-	}
-	
-	/**
-	 * 
-	 */
-	public  static void commit() {
-		ConnectionHolder holder=connectionHolder.get();
-		if(holder==null){
-			return;
-		}
-		try {
-			if(holder.connection!=null&&holder.useTransaction){
-				holder.connection.commit();
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage(),e);
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	public  static void rollback() {
-		ConnectionHolder holder=connectionHolder.get();
-		if(holder==null){
-			return;
-		}
-		try {
-			if(holder.connection!=null&&holder.useTransaction){
-				holder.connection.rollback();
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage(),e);
-		}
-	}
-	/**
-	 * 
-	 * @return
-	 */
-	public static Connection getConnection() {
+	public static void commit() {
 		ConnectionHolder holder = connectionHolder.get();
-		if(holder==null){
-			throw new SmartJdbcException("startTransaction first");
+		connectionHolder.set(null);
+		if (holder == null || holder.getConnection() == null) {
+			return;
 		}
-		if(holder.connection==null) {
-			try {
-				Connection conn=openConnection();
-				if(conn.getAutoCommit()==holder.useTransaction) {
-					conn.setAutoCommit(!holder.useTransaction);
+		try {
+			if (holder.isUseTransaction()) {// use Transaction
+				try {
+					holder.getConnection().commit();
+				} catch (SQLException e1) {
+					logger.error(e1.getMessage(), e1);
 				}
-				holder.connection=conn;
-			} catch (Exception e) {
-				throw new SmartJdbcException(e.getMessage(), e);
 			}
+		} finally {
+			JdbcUtil.close(holder.getConnection());
 		}
-		return holder.connection;
 	}
-	
+
+	/**
+	 * 
+	 */
+	public static void rollback() {
+		ConnectionHolder holder = connectionHolder.get();
+		connectionHolder.set(null);
+		if (holder == null || holder.getConnection() == null) {
+			return;
+		}
+		try {
+			if (holder.isUseTransaction()) {// use Transaction
+				try {
+					holder.getConnection().rollback();
+				} catch (SQLException e1) {
+					logger.error(e1.getMessage(), e1);
+				}
+			}
+
+		} finally {
+			JdbcUtil.close(holder.getConnection());
+		}
+	}
+
 	/**
 	 * 
 	 * @return
 	 * @throws SQLException
 	 */
-	private static Connection openConnection() throws SQLException {
-		if(dataSource==null){
-			throw new SmartJdbcException("DataSource not found");
+	public static Connection openConnection(String dataSourceIndex) throws SQLException {
+		if(dataSourceIndex==null) {
+			dataSourceIndex=Config.DEFAULT_DATASOURCE_INDEX;
 		}
-		Connection conn=dataSource.getConnection();
-		if(transactionIsolationLevel!=null) {
-			conn.setTransactionIsolation(transactionIsolationLevel);
+		DataSource dataSource=Config.getDataSources().get(dataSourceIndex);
+		if(dataSource==null) {
+			throw new RuntimeException("DataSource not found with index "+dataSourceIndex);
+		}
+		return dataSource.getConnection();
+	}
+
+	/**
+	 * 
+	 * @return
+	 * @throws SQLException
+	 */
+	public static Connection getConnecton(String datasourceIndex) throws SQLException {
+		ConnectionHolder holder = connectionHolder.get();
+		if (holder == null) {
+			throw new SmartJdbcException("Connection not found");
+		}
+		Connection conn=holder.getConnection();
+		if(conn==null) {
+			conn=openConnection(datasourceIndex);
+			if(holder.isUseTransaction()==conn.getAutoCommit()) {
+				conn.setAutoCommit(!holder.isUseTransaction());
+			}
+			holder.setConnection(conn);
 		}
 		return conn;
 	}
-	//
-
-	/**
-	 * @return the dataSource
-	 */
-	public static DataSource getDataSource() {
-		return dataSource;
-	}
-
-	/**
-	 * @param dataSource the dataSource to set
-	 */
-	public static void setDataSource(DataSource dataSource) {
-		ConnectionManager.dataSource = dataSource;
-	}
-
-	/**
-	 * @return the transactionIsolationLevel
-	 */
-	public static Integer getTransactionIsolationLevel() {
-		return transactionIsolationLevel;
-	}
-
-	/**
-	 * @param transactionIsolationLevel the transactionIsolationLevel to set
-	 */
-	public static void setTransactionIsolationLevel(Integer transactionIsolationLevel) {
-		ConnectionManager.transactionIsolationLevel = transactionIsolationLevel;
-	}
-	
 }

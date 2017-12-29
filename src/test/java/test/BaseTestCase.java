@@ -2,6 +2,7 @@ package test;
 
 import javax.sql.DataSource;
 
+import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.datasource.ConnectionManager;
 import io.itit.smartjdbc.datasource.DriverManagerDataSource;
 import junit.framework.TestCase;
@@ -22,7 +23,7 @@ public abstract class BaseTestCase extends TestCase{
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		ConnectionManager.setDataSource(createDriverManagerDataSource(dbName));
+		Config.addDataSource(createDriverManagerDataSource(dbName));
 		ConnectionManager.startTransaction(true);
 	}
 	

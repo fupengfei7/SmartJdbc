@@ -8,48 +8,49 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.itit.smartjdbc.DAOInterceptor;
 import io.itit.smartjdbc.Query;
-import io.itit.smartjdbc.QueryTerms;
+import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.ResultSetHandler;
-import io.itit.smartjdbc.SmartJdbcConfig;
+import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
+import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.annotations.QueryDefine;
-import io.itit.smartjdbc.annotations.QueryField;
-import io.itit.smartjdbc.annotations.QueryDefine.OrderBy;
-import io.itit.smartjdbc.annotations.QueryField.WhereSql;
+import io.itit.smartjdbc.provider.DeleteProvider;
+import io.itit.smartjdbc.provider.InsertProvider;
+import io.itit.smartjdbc.provider.SelectProvider;
+import io.itit.smartjdbc.provider.SqlProvider;
+import io.itit.smartjdbc.provider.UpdateProvider;
 import io.itit.smartjdbc.util.IOUtil;
 import io.itit.smartjdbc.util.JSONUtil;
-import io.itit.smartjdbc.util.QueryUtil;
-import io.itit.smartjdbc.util.StringUtil;
 
 /**
  * 
  * @author skydu
  */
 public class SmartDAO extends BaseDAO{
-	//
-	private static Logger logger=LoggerFactory.getLogger(SmartDAO.class);
-	//
-	//
+	
+	/**
+	 * 
+	 * @param o
+	 * @param withGenerateKey
+	 * @param excludeProperties
+	 * @return
+	 */
 	public int insert(Object o,boolean withGenerateKey,String... excludeProperties){
 		beforeInsert(o, withGenerateKey, excludeProperties);
-		SqlBean sqlBean=SqlProvider.createInsertSql(o, excludeProperties);
+		SqlBean sqlBean=new InsertProvider(o, excludeProperties).build();
 		String sql=sqlBean.sql;
 		Object[] parameters=sqlBean.parameters;
 		int result=0;
 		if(withGenerateKey){
-			result=executeWithGenKey(sql,true,parameters);		
+			result=executeWithGenKey(sql,parameters);		
 		}else{
 			executeUpdate(sql,parameters);
 		}
@@ -64,7 +65,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param excludeProperties
 	 */
 	protected void beforeInsert(Object o, boolean withGenerateKey, String[] excludeProperties) {
-		List<DAOInterceptor> interceptors=SmartJdbcConfig.getDaoInterceptors();
+		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
 				interceptor.beforeInsert(o, withGenerateKey, excludeProperties);
@@ -80,7 +81,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param excludeProperties
 	 */
 	protected void afterInsert(int result, Object o, boolean withGenerateKey, String[] excludeProperties) {
-		List<DAOInterceptor> interceptors=SmartJdbcConfig.getDaoInterceptors();
+		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
 				interceptor.afterInsert(result,o, withGenerateKey, excludeProperties);
@@ -110,7 +111,7 @@ public class SmartDAO extends BaseDAO{
 			boolean excludeNull,
 			String... excludeProperties){
 		beforeUpdate(bean,excludeNull,excludeProperties);
-		SqlBean sqlBean=SqlProvider.createUpdateSql(bean, excludeNull, excludeProperties);
+		SqlBean sqlBean=new UpdateProvider(bean, excludeNull, excludeProperties).build();
 		int result=executeUpdate(sqlBean.sql,sqlBean.parameters);
 		afterUpdate(result,bean,excludeNull,excludeProperties);
 		return result;
@@ -123,7 +124,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param excludeProperties
 	 */
 	protected void beforeUpdate(Object bean, boolean excludeNull, String[] excludeProperties) {
-		List<DAOInterceptor> interceptors=SmartJdbcConfig.getDaoInterceptors();
+		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
 				interceptor.beforeUpdate(bean, excludeNull, excludeProperties);
@@ -139,7 +140,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param excludeProperties
 	 */
 	protected void afterUpdate(int result, Object bean, boolean excludeNull, String[] excludeProperties) {
-		List<DAOInterceptor> interceptors=SmartJdbcConfig.getDaoInterceptors();
+		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
 				interceptor.afterUpdate(result,bean, excludeNull, excludeProperties);
@@ -153,11 +154,11 @@ public class SmartDAO extends BaseDAO{
 	 * @param qt
 	 * @return
 	 */
-	public int delete(Class<?> domainClass,QueryTerms qt){
-		beforeDelete(domainClass,qt);
-		SqlBean sqlBean=SqlProvider.createDeleteSql(domainClass, qt);
+	public int delete(Class<?> domainClass,QueryWhere qw){
+		beforeDelete(domainClass,qw);
+		SqlBean sqlBean=new DeleteProvider(domainClass, qw).build();
 		int result=executeUpdate(sqlBean.sql,sqlBean.parameters);
-		afterDelete(result,domainClass,qt);
+		afterDelete(result,domainClass,qw);
 		return result;
 	}
 	
@@ -166,8 +167,8 @@ public class SmartDAO extends BaseDAO{
 	 * @param domainClass
 	 * @param qt
 	 */
-	protected void beforeDelete(Class<?> domainClass, QueryTerms qt) {
-		List<DAOInterceptor> interceptors=SmartJdbcConfig.getDaoInterceptors();
+	protected void beforeDelete(Class<?> domainClass, QueryWhere qt) {
+		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
 				interceptor.beforeDelete(domainClass, qt);
@@ -181,129 +182,132 @@ public class SmartDAO extends BaseDAO{
 	 * @param domainClass
 	 * @param qt
 	 */
-	protected void afterDelete(int result, Class<?> domainClass, QueryTerms qt) {
-		List<DAOInterceptor> interceptors=SmartJdbcConfig.getDaoInterceptors();
+	protected void afterDelete(int result, Class<?> domainClass, QueryWhere qt) {
+		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
 				interceptor.afterDelete(result,domainClass, qt);
 			}
 		}
 	}
-
+	
 	/**
 	 * 
 	 * @param domainClass
-	 * @param qt
+	 * @param qw
 	 * @return
 	 */
-	public int queryCount(Class<?> domainClass,QueryTerms qt){
-		SqlBean sqlBean=SqlProvider.queryCountSql(domainClass, qt);
+	public <T> T getDomain(Class<T> domainClass,QueryWhere qw){
+		SqlBean sqlBean=new SelectProvider(domainClass).query(qw).build();
+		return queryObject(domainClass,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param query
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T getDomain(Query query){
+		Class<T> domainClass=(Class<T>) getDomainClass(query);
+		SqlBean sqlBean=new SelectProvider(domainClass).query(query).build();
+		return queryObject(domainClass,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param provider
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T getDomain(SelectProvider provider){
+		SqlBean sqlBean=provider.build();
+		Class<T> clazz=(Class<T>) provider.getDomainClass();
+		return queryObject(clazz,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param domainClass
+	 * @param qw
+	 * @return
+	 */
+	public <T> List<T> getList(Class<T> domainClass,QueryWhere qw){
+		SqlBean sqlBean=new SelectProvider(domainClass).query(qw).needPaging(true).build();
+		return queryList(domainClass,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param query
+	 * @return
+	 */
+	public <T> List<T> getList(Query query){
+		Class<T> domainClass=getDomainClass(query);
+		SqlBean sqlBean=new SelectProvider(domainClass).query(query).needPaging(true).build();
+		return queryList(domainClass,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param selectProvider
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> List<T> getList(SelectProvider selectProvider){
+		Class<T> domainClass=(Class<T>) selectProvider.getDomainClass();
+		SqlBean sqlBean=selectProvider.needPaging(true).build();
+		return queryList(domainClass,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param domainClass
+	 * @return
+	 */
+	public <T> List<T> getAll(Class<T> domainClass){
+		SqlBean sqlBean=new SelectProvider(domainClass).build();
+		return queryList(domainClass,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param domainClass
+	 * @param qw
+	 * @return
+	 */
+	public int getListCount(Class<?> domainClass,QueryWhere qw){
+		SqlBean sqlBean=new SelectProvider(domainClass).
+				selectCount().
+				query(qw).
+				needOrderBy(false).
+				build();
 		return queryForInteger(sqlBean.sql, sqlBean.parameters);
 	}
 	
 	/**
 	 * 
-	 * @param domainClass
-	 * @param qt
-	 * @param excludeProperties
-	 * @return
-	 */
-	public <T> T query(Class<T> domainClass,QueryTerms qt,String... excludeProperties){
-		SqlBean sqlBean=SqlProvider.createQuerySql(domainClass, qt, excludeProperties);
-		return queryForObject(sqlBean.sql,new ResultSetHandler<T>() {
-			@Override
-			public T handleRow(ResultSet row) throws Exception {
-				T o=domainClass.newInstance();
-				convertBean(o, row, excludeProperties);
-				return o;
-			}			
-		}, sqlBean.parameters);
-	}
-	
-	/**
-	 * 
-	 * @param domainClass
 	 * @param query
 	 * @return
 	 */
-	public <T> T query(Class<T> domainClass,Query query){
-		SqlBean sqlBean=SqlProvider.createQuerySql(domainClass,query,false);
-		return queryForObject(sqlBean.sql,new ResultSetHandler<T>() {
-			@Override
-			public T handleRow(ResultSet row) throws Exception {
-				T o=domainClass.newInstance();
-				convertBean(o,row);
-				return o;
-			}			
-		}, sqlBean.parameters);
+	public int getListCount(Query query){
+		Class<?> domainClass=getDomainClass(query);
+		SqlBean sqlBean=new SelectProvider(domainClass).
+				selectCount().
+				query(query).
+				needOrderBy(false).
+				build();
+		return queryForInteger(sqlBean.sql,sqlBean.parameters);
 	}
 	
 	/**
 	 * 
-	 * @param domainClass
-	 * @param query
+	 * @param selectProvider
 	 * @return
 	 */
-	public int queryCount(Class<?> domainClass,Query query){
-		SqlBean sqlBean=SqlProvider.createQueryCountSql(domainClass, query);
-		return queryForInteger(sqlBean.sql, sqlBean.parameters);
-	}
-	
-	/**
-	 * 
-	 * @param domainClass
-	 * @param qt
-	 * @param excludeProperties
-	 * @return
-	 */
-	public <T> List<T>queryList(Class<T> domainClass,QueryTerms qt,String... excludeProperties){
-		SqlBean sqlBean=SqlProvider.createQuerySql(domainClass, qt, excludeProperties);
-		return queryForList(sqlBean.sql,new ResultSetHandler<T>() {
-			@Override
-			public T handleRow(ResultSet row) throws Exception {
-				T o=domainClass.newInstance();
-				convertBean(o, row, excludeProperties);
-				return o;
-			}			
-		}, sqlBean.parameters);
-	}
-	
-	/**
-	 * 
-	 * @param domainClass
-	 * @param query
-	 * @return
-	 */
-	public <T> List<T>queryList(Class<T> domainClass,Query query){
-		SqlBean sqlBean=SqlProvider.createQuerySql(domainClass,query,true);
-		return queryForList(sqlBean.sql,new ResultSetHandler<T>() {
-			@Override
-			public T handleRow(ResultSet row) throws Exception {
-				T o=domainClass.newInstance();
-				convertBean(o, row);
-				return o;
-			}			
-		}, sqlBean.parameters);
-	}
-	
-	/**
-	 * 
-	 * @param query
-	 * @return
-	 */
-	public <T> List<T> queryList(Query query){
-		QueryTerms qt=createQueryTerms(query,true);
-		return queryList(getDomainClass(query),qt);
-	}
-	
-	/**
-	 * 
-	 * @param query
-	 * @return
-	 */
-	public int queryListCount(Query query) {
-		QueryTerms qt=createQueryTerms(query,false);
-		return queryCount(getDomainClass(query),qt);
+	public int getListCount(SelectProvider selectProvider){
+		SqlBean sqlBean=selectProvider.selectCount().needOrderBy(false).build();
+		return queryForInteger(sqlBean.sql,sqlBean.parameters);
 	}
 	
 	/**
@@ -314,102 +318,10 @@ public class SmartDAO extends BaseDAO{
 	@SuppressWarnings("unchecked")
 	protected <T> Class<T> getDomainClass(Query query) {
 		QueryDefine queryDefine=query.getClass().getAnnotation(QueryDefine.class);
-		if(queryDefine==null||queryDefine.domainClass()==null) {
+		if(queryDefine==null) {
 			throw new SmartJdbcException("no domainClass found in QueryClass["+query.getClass().getName()+"]");
 		}
 		return (Class<T>) queryDefine.domainClass();
-	}
-	
-	/**
-	 * 
-	 * @param query
-	 * @param needPaging
-	 * @return
-	 */
-	protected QueryTerms createQueryTerms(Query query,boolean needPaging) {
-		QueryTerms qt = QueryTerms.create();
-		addConditions(qt,query);
-		if(needPaging) {//需要分页
-			addPaging(qt, query);
-		}
-		return qt;
-	}
-	
-	/**
-	 * 
-	 * @param qt
-	 * @param q
-	 */
-	protected void addConditions(QueryTerms qt,Query q) {
-		Field[] fields=q.getClass().getFields();
-		for (Field field : fields) {
-			try {
-				if(Modifier.isStatic(field.getModifiers())||
-						Modifier.isFinal(field.getModifiers())) {
-					continue;
-				}
-				Class<?> fieldType=field.getType();
-				Object value=field.get(q);
-				if(value==null||(fieldType.equals(String.class)&&StringUtil.isEmpty((String)value))) {
-					continue;
-				}
-				
-				QueryField queryFieldDefine=field.getAnnotation(QueryField.class);
-				if(queryFieldDefine!=null&&queryFieldDefine.ingore()) {
-					continue;
-				}
-				if(queryFieldDefine!=null&&queryFieldDefine.whereSql()!=null&&
-						(!StringUtil.isEmpty(queryFieldDefine.whereSql().sql()))) {//whereSql check first
-					WhereSql whereSql=queryFieldDefine.whereSql();
-					qt.whereSql(whereSql.sql(),StringUtil.convert(whereSql.values()));
-				}else {
-					String dbFieldName=convertFieldName(field.getName());
-					if(queryFieldDefine!=null&&(!StringUtil.isEmpty(queryFieldDefine.field()))) {
-						dbFieldName=convertFieldName(queryFieldDefine.field());
-					}
-					String operator="";
-					if(queryFieldDefine!=null&&(!StringUtil.isEmpty(queryFieldDefine.operator()))) {
-						operator=queryFieldDefine.operator();
-					}
-					if (StringUtil.isEmpty(operator)) {
-						if(fieldType.equals(String.class)) {//字符串默认like
-							operator="like";
-						}else if (fieldType.equals(int[].class)) {//int[] 默认 in
-							int[] values=(int[])value;
-							List<Integer> intList = new ArrayList<Integer>();
-							for (int index = 0; index < values.length; index++){
-							    intList.add(values[index]);
-							}
-							QueryUtil.addInCondition(qt, dbFieldName,true,intList);
-							continue;
-						}else {
-							operator="=";
-						}
-					}
-					qt.where(dbFieldName,operator,value);
-				}
-			} catch (Exception e) {
-				logger.error(e.getMessage(),e);
-				throw new SmartJdbcException(e.getMessage());
-			}
-		}
-	}
-	
-	/**
-	 * 
-	 * @param qt
-	 * @param query
-	 */
-	public void addPaging(QueryTerms qt,Query query) {
-		QueryDefine queryDefine=query.getClass().getAnnotation(QueryDefine.class);
-		if(queryDefine!=null&&queryDefine.orderBys()!=null) {
-			for (OrderBy orderBy : queryDefine.orderBys()) {
-				if (query.orderType != null&& query.orderType == orderBy.orderType()) {
-					qt.orderBy(orderBy.sql());
-				}
-			}
-		}
-		qt.limit(query.getStartPageIndex(), query.pageSize);
 	}
 	
 	/**
@@ -418,7 +330,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param rs
 	 * @return
 	 */
-	public <T> T convertBean(Class<T> type,ResultSet rs){
+	protected <T> T convertBean(Class<T> type,ResultSet rs){
 		try{
 			T instance=type.newInstance();
 			convertBean(instance,rs);
@@ -435,7 +347,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param excludeProperties
 	 * @throws Exception
 	 */
-	public void convertBean(Object o, ResultSet rs, String... excludeProperties)
+	protected void convertBean(Object o, ResultSet rs, String... excludeProperties)
 			throws Exception {
 		Set<String> excludesNames = new TreeSet<String>();
 		for (String e : excludeProperties) {
@@ -445,6 +357,9 @@ public class SmartDAO extends BaseDAO{
 		SqlProvider.checkExcludeProperties(excludeProperties,type);
 		for (Field f : type.getFields()) {
 			if (excludesNames.contains(f.getName())) {
+				continue;
+			}
+			if(f.getAnnotation(NonPersistent.class)!=null) {
 				continue;
 			}
 			String fieldName = convertFieldName(f.getName());
@@ -513,7 +428,7 @@ public class SmartDAO extends BaseDAO{
 	 * @return
 	 */
 	protected  String convertFieldName(String name) {
-		return SmartJdbcConfig.convertFieldName(name);
+		return Config.convertFieldName(name);
 	}
 	
 	/**
@@ -583,6 +498,36 @@ public class SmartDAO extends BaseDAO{
 		return queryForObject(sql, rowHandler, parameters);
 	}
 	
+	/**
+	 * 
+	 * @param domainClass
+	 * @param clazz
+	 * @param field
+	 * @param qt
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <S extends Number>S sum(Class<?> domainClass,Class<S> clazz,String field,QueryWhere qt){
+		SqlBean sqlBean=new SelectProvider(domainClass).sum(field).needOrderBy(false).build();
+		String sql=sqlBean.sql;
+		Object[] parameters=sqlBean.parameters;
+		if(clazz==long.class||clazz==Long.class){
+			return (S) queryForLong(sql,parameters);
+		}
+		if(clazz==int.class||clazz==Integer.class){
+			return (S) queryForInteger(sql,parameters);
+		}
+		if(clazz==short.class||clazz==Short.class){
+			return (S) queryForShort(sql,parameters);
+		}
+		if(clazz==Double.class||clazz==Double.class){
+			return (S) queryForDouble(sql,parameters);
+		}
+		if(clazz==Float.class||clazz==Float.class){
+			return (S) queryForFloat(sql,parameters);
+		}
+		throw new IllegalArgumentException(clazz.getSimpleName()+" not supported");
+	}
 	/**
 	 * 
 	 * @param sql

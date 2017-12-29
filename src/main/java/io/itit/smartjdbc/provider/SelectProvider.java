@@ -1,4 +1,4 @@
-package io.itit.smartjdbc.dao;
+package io.itit.smartjdbc.provider;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -12,16 +12,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.itit.smartjdbc.Query;
-import io.itit.smartjdbc.SmartJdbcConfig;
+import io.itit.smartjdbc.QueryWhere;
+import io.itit.smartjdbc.QueryWhere.Where;
+import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
-import io.itit.smartjdbc.annotations.DomainDefine;
 import io.itit.smartjdbc.annotations.DomainField;
 import io.itit.smartjdbc.annotations.ForeignKey;
 import io.itit.smartjdbc.annotations.InnerJoin;
 import io.itit.smartjdbc.annotations.NonPersistent;
+import io.itit.smartjdbc.annotations.OrderBys;
+import io.itit.smartjdbc.annotations.OrderBys.OrderBy;
 import io.itit.smartjdbc.annotations.QueryDefine;
 import io.itit.smartjdbc.annotations.QueryField;
-import io.itit.smartjdbc.annotations.QueryDefine.OrderBy;
 import io.itit.smartjdbc.annotations.QueryField.WhereSql;
 import io.itit.smartjdbc.util.DumpUtil;
 import io.itit.smartjdbc.util.StringUtil;
@@ -31,9 +33,9 @@ import io.itit.smartjdbc.util.StringUtil;
  * @author skydu
  *
  */
-public class SelectSqlBuilder {
+public class SelectProvider extends SqlProvider{
 	//
-	private static Logger logger=LoggerFactory.getLogger(SelectSqlBuilder.class);
+	private static Logger logger=LoggerFactory.getLogger(SelectProvider.class);
 	//
 	private static final String DEFAULT_MAIN_TABLE_ALIAS="a";
 	//
@@ -42,98 +44,144 @@ public class SelectSqlBuilder {
 		public String field;
 		public String asField;
 		public boolean distinct;
+		public String statFunction;
 	}
 	//
-	public static class Where{
-		public String alias;
-		public String key;
-		public Object value;
-		public String operator;
-		public String sql;
-		public LinkedList<Object> sqlValues;
-		public Where() {
-			sqlValues=new LinkedList<Object>();
-		}
+	public static class GroupByField{
+		public String tableAlias;
+		public String field;
 	}
 	//
 	public static class Join{
+		public String key;
 		public String table1Alias;
 		public Class<?> table1;
 		public String table1Field;
 		public String table2Alias;
 		public Class<?> table2;
 		public String table2Field;
+		public List<Join> joins;
+		//
+		public Join() {
+			joins=new ArrayList<>();
+		}
 	}
 	//
-	public List<SelectField> selectFields;
-	public Map<String,Join> innerJoins;//inner join tableName alias on 
-	public List<Join> leftJoins;//left join tableName alias on 
+	Class<?> domainClass;
+	Query query;
+	boolean isSelectCount;
+	boolean needPaging;
+	boolean needOrderBy;
+	boolean isForUpdate;
+	List<SelectField> selectFields;
+	Map<String,Join> innerJoins;//inner join tableName alias on 
+	List<Join> leftJoins;//left join tableName alias on 
+	QueryWhere qw;
+	List<GroupByField> groupBys;
 	//
-	public List<Where> wheres;
-	public String orderBy;
-	public Integer limitStart=0;
-	public Integer limitEnd=-1;
-	//
-	public SelectSqlBuilder() {
-		selectFields=new ArrayList<>();
-		wheres=new ArrayList<>();
-		leftJoins=new ArrayList<>();
+	public SelectProvider(Class<?> domainClass) {
+		this.domainClass=domainClass;
+		this.selectFields=new ArrayList<>();
+		this.qw=new QueryWhere();
+		this.groupBys=new ArrayList<>();
+		this.leftJoins=new ArrayList<>();
+		this.needOrderBy=true;
 	}
 	//
-	public SelectSqlBuilder select(String field) {
-		return select(null, field, null, false);
+	public SelectProvider selectCount() {
+		this.isSelectCount=true;
+		return this;
 	}
 	//
-	public SelectSqlBuilder select(String tableAlias,String field) {
-		return select(tableAlias, field, null, false);
+	public SelectProvider sum(String sumField) {
+		sum(DEFAULT_MAIN_TABLE_ALIAS, sumField, sumField);
+		return this;
 	}
 	//
-	public SelectSqlBuilder select(String tableAlias,String field,String asAlias) {
-		return select(tableAlias, field, asAlias, false);
+	public SelectProvider sum(String alias,String field,String asField) {
+		select(alias, field, asField, false, "sum");
+		return this;
 	}
 	//
-	public SelectSqlBuilder select(String tableAlias,String field,String asField,boolean distinct) {
+	public SelectProvider needPaging(boolean needPaging) {
+		this.needPaging=needPaging;
+		return this;
+	}
+	//
+	public SelectProvider needOrderBy(boolean needOrderBy) {
+		this.needOrderBy=needOrderBy;
+		return this;
+	}
+	//
+	public SelectProvider query(Query query) {
+		this.query=query;
+		return this;
+	}
+	//
+	public SelectProvider query(QueryWhere queryWhere) {
+		this.qw=queryWhere;
+		return this;
+	}
+	//
+	public SelectProvider select(String field) {
+		return select(null, field, null, false,null);
+	}
+	//
+	public SelectProvider select(String tableAlias,String field) {
+		return select(tableAlias, field, null, false, null);
+	}
+	//
+	public SelectProvider select(String tableAlias,String field,String asAlias) {
+		return select(tableAlias, field, asAlias, false, null);
+	}
+	//
+	public SelectProvider select(String tableAlias,String field,String asField,
+			boolean distinct,String statFunction) {
+		selectFields.add(createSelectField(tableAlias, field, asField, distinct, statFunction));
+		return this;
+	}
+	//
+	private SelectField createSelectField(String tableAlias,String field,String asField,boolean distinct,String statFunction) {
 		SelectField sf=new SelectField();
 		sf.tableAlias=tableAlias;
 		sf.field=field;
 		sf.asField=asField;
 		sf.distinct=distinct;
-		selectFields.add(sf);
-		return this;
+		sf.statFunction=statFunction;
+		return sf;
 	}
 	//
-	public SelectSqlBuilder where(String alias,String key,Object value){
+	public SelectProvider where(String alias,String key,Object value){
 		return this.where(alias,key, "=", value);
 	}
 	//
-	public SelectSqlBuilder where(String key,Object value){
-		return this.where(null,key, "=", value);
+	public SelectProvider where(String key,Object value){
+		return this.where(DEFAULT_MAIN_TABLE_ALIAS,key, "=", value);
 	}
 	//
-	public SelectSqlBuilder where(String alias,String key,String op,Object value){
+	public SelectProvider where(String alias,String key,String op,Object value){
 		Where w=new Where();
 		w.alias=alias;
 		w.key=key;
 		w.operator=op;
 		w.value=value;
-		this.wheres.add(w);
+		qw.wheres.add(w);
 		return this;
 	}
 	//
-	public SelectSqlBuilder whereSql(String sql,Object ...values){
+	public SelectProvider whereSql(String sql,Object ...values){
 		Where w=new Where();
 		w.sql=sql;
 		for(int i=0;i<values.length;i++){
 			w.sqlValues.add(values[i]);
 		}
-		this.wheres.add(w);
+		qw.wheres.add(w);
 		return this;
 	}
 	//
-	//
-	public Object[] whereValues(){
+	protected Object[] whereValues(){
 		List<Object>ret=new LinkedList<Object>();
-		for(Where w:wheres){
+		for(Where w:qw.wheres){
 			if(w.key!=null){
 				ret.add(w.value);
 			}else{
@@ -143,48 +191,46 @@ public class SelectSqlBuilder {
 		return ret.toArray();
 	}
 	//
-	public String whereStatement(){
-		StringBuilder sql=new StringBuilder();
-		sql.append(" ");
-		for(Where w:wheres){
-			if(w.key!=null){
-				sql.append(" and ");
-				if(w.alias!=null) {
-					sql.append(w.alias).append(".");
-				}
-				sql.append("`").append(w.key).append("` ");
-				sql.append(w.operator).append(" ");
-				if(w.operator.trim().equalsIgnoreCase("like")){
-					sql.append(" concat('%',?,'%') ");
-				}else{
-					sql.append(" ? ");
-				}
-			}else{
-				sql.append(" "+ w.sql+" ");
-			}
-		}
-		sql.append(" ");
-		return sql.toString();
-	}
-	//
-	public SelectSqlBuilder orderBy(String orderBy){
-		this.orderBy=orderBy;
+	public SelectProvider groupBy(String field) {
+		groupBy(DEFAULT_MAIN_TABLE_ALIAS, field);
 		return this;
 	}
 	//
-	public SelectSqlBuilder limit(int start,int limit){
-		this.limitStart=start;
-		this.limitEnd=limit;
+	public SelectProvider groupBy(String tableAlias,String field) {
+		groupBys.add(createGroupByField(tableAlias, field));
 		return this;
 	}
 	//
-	public SelectSqlBuilder limit(int end){
-		this.limitStart=0;
-		this.limitEnd=end;
+	private GroupByField createGroupByField(String tableAlias,String field) {
+		GroupByField groupByField=new GroupByField();
+		groupByField.tableAlias=tableAlias;
+		groupByField.field=field;
+		return groupByField;
+	}
+	//
+	public SelectProvider orderBy(String orderBy){
+		qw.orderBy=orderBy;
 		return this;
 	}
 	//
-	private List<Field> getQueryFields(Query query){
+	public SelectProvider limit(int start,int limit){
+		qw.limitStart=start;
+		qw.limitEnd=limit;
+		return this;
+	}
+	//
+	public SelectProvider limit(int end){
+		qw.limitStart=0;
+		qw.limitEnd=end;
+		return this;
+	}
+	//
+	public SelectProvider forUpdate(){
+		this.isForUpdate=true;
+		return this;
+	}
+	//
+	protected List<Field> getQueryFields(Query query){
 		List<Field> fieldList=new ArrayList<>();
 		Field[] fields = query.getClass().getFields();
 		QueryDefine queryDefine = query.getClass().getAnnotation(QueryDefine.class);
@@ -216,7 +262,7 @@ public class SelectSqlBuilder {
 		return fieldList;
 	}
 	//
-	private Map<String, Join> getInnerJoins(Query query) {
+	protected Map<String, Join> getInnerJoins(Query query) {
 		Map<String, Join> map = new LinkedHashMap<>();
 		if(query==null) {
 			return map;
@@ -260,14 +306,10 @@ public class SelectSqlBuilder {
 	 * @param query
 	 * @param needPaging
 	 */
-	public void addCondition(Query query,boolean needPaging) {
-		addCondition(query);
-		if(needPaging) {
-			addPaging(query);
+	protected void addWheres(Query q) {
+		if(q==null) {
+			return;
 		}
-	}
-	//
-	protected void addCondition(Query q) {
 		List<Field> fields=getQueryFields(q);
 		for (Field field : fields) {
 			try {
@@ -320,7 +362,7 @@ public class SelectSqlBuilder {
 		}
 	}
 	//
-	public SelectSqlBuilder addInCondition(String alias,String field, boolean withFieldEscape,
+	protected SelectProvider addInCondition(String alias,String field, boolean withFieldEscape,
 			List<? extends Object> values) {
 		Object[] valueArray = null;
 		if (values != null) {
@@ -330,7 +372,7 @@ public class SelectSqlBuilder {
 	}
 
 	//
-	public SelectSqlBuilder addInCondition(String alias,String field, boolean withFieldEscape,
+	protected SelectProvider addInCondition(String alias,String field, boolean withFieldEscape,
 			Object[] values) {
 		if (values == null) {
 			return this;
@@ -357,7 +399,7 @@ public class SelectSqlBuilder {
 		return whereSql(buffer.toString(), values);
 	}
 	//
-	public static Object[] convert(String[] values) {
+	protected static Object[] convert(String[] values) {
 		if(values==null) {
 			return null;
 		}
@@ -368,37 +410,42 @@ public class SelectSqlBuilder {
 		return oValues;
 	}
 	//
-	public void addPaging(Query query) {
-		QueryDefine queryDefine=query.getClass().getAnnotation(QueryDefine.class);
-		if(queryDefine!=null&&queryDefine.orderBys()!=null) {
-			for (OrderBy orderBy : queryDefine.orderBys()) {
+	protected void addOrderBy(Query query) {
+		if(query==null) {
+			return;
+		}
+		OrderBys orderBys=query.getClass().getAnnotation(OrderBys.class);
+		if(orderBys!=null&&orderBys.orderBys()!=null) {
+			for (OrderBy orderBy : orderBys.orderBys()) {
 				if (query.orderType != null&& query.orderType == orderBy.orderType()) {
 					orderBy(orderBy.sql());
 				}
 			}
 		}
-		this.limit(query.getStartPageIndex(), query.pageSize);
 	}
 	//
-	private void buildSelectFields(Class<?> domainClass){
+	protected void addPaging(Query query) {
+		if(query==null) {
+			return;
+		}
+		this.limit(query.getStartPageIndex(),query.pageSize);
+	}
+	//
+	private void buildSelectFields(){
 		int index=1;
 		Map<String, Join> map = new LinkedHashMap<>();
 		Field[] fields=domainClass.getFields();
 		for (Field field : fields) {
-			if (Modifier.isStatic(field.getModifiers())
-					|| Modifier.isFinal(field.getModifiers())) {
-				continue;
-			}
-			DomainField domainField = field.getAnnotation(DomainField.class);
-			if(domainField==null) {
-				select(DEFAULT_MAIN_TABLE_ALIAS, field.getName());
+			if (Modifier.isStatic(field.getModifiers())|| Modifier.isFinal(field.getModifiers())) {
 				continue;
 			}
 			NonPersistent nonPersistent= field.getAnnotation(NonPersistent.class);
 			if (nonPersistent!=null) {
 				continue;
 			}
-			if (StringUtil.isEmpty(domainField.foreignKeyFields())) {
+			DomainField domainField = field.getAnnotation(DomainField.class);
+			if(domainField==null||StringUtil.isEmpty(domainField.foreignKeyFields())) {
+				select(DEFAULT_MAIN_TABLE_ALIAS, field.getName());
 				continue;
 			}
 			String foreignKeyId = domainField.foreignKeyFields();
@@ -420,73 +467,112 @@ public class SelectSqlBuilder {
 								domainClass.getSimpleName()+"."+foreignKeyField.getName());
 				}
 				Class<?> table2=foreignKey.domainClass();
-				String key=table1.getSimpleName()+"."+id+"="+table2.getSimpleName()+".id";
-				join = map.get(key);
-				if (join ==null) {
-					join = new Join();
-					join.table1Alias=table1Alias;
-					join.table1=table1;
-					join.table2 = table2;
-					join.table1Field=id;
-					join.table2Field = "id";
-					join.table2Alias ="l"+(index++);
-					map.put(key, join);
+				String key=id;
+				if(join==null) {
+					join = map.get(key);
+					if(join==null) {
+						join=createLeftJoin(key,table1Alias,"l"+(index++),table1, table2,id);
+						map.put(key, join);
+					}
+				}else {
+					Join childJoin=getJoin(key, join.joins);
+					if(childJoin==null) {
+						childJoin=createLeftJoin(key,table1Alias,"l"+(index++),table1,table2,id);
+						join.joins.add(childJoin);
+					}
+					join=childJoin;
 				}
 				table1=table2;
 				table1Alias=join.table2Alias;
 			}
-			SelectField selectField=new SelectField();
-			selectField.tableAlias=join.table2Alias;
-			selectField.field=domainField.field();
-			selectField.asField=field.getName();
-			selectFields.add(selectField);
 			boolean distinct=domainField.distinct();
+			String statFunc=domainField.statFunc();
 			if(StringUtil.isEmpty(domainField.field())) {
-				select(join.table2Alias,field.getName(),null,distinct);
+				select(join.table2Alias,field.getName(),null,distinct,statFunc);
 			}else {
-				select(join.table2Alias,domainField.field(),field.getName(),distinct);
+				select(join.table2Alias,domainField.field(),field.getName(),distinct,statFunc);
 			}
 		}
-		leftJoins=new ArrayList<>(map.values());
 	}
 	//
-	public static String convertFieldName(String name) {
-		return SmartJdbcConfig.convertFieldName(name);
-	}
-	//
-	public static String getTableName(Class<?> domainClass) {
-		DomainDefine domainDefine=domainClass.getAnnotation(DomainDefine.class);
-		if (domainDefine != null && (!domainDefine.tableClass().equals(void.class))) {
-			return getTableName(domainDefine.tableClass());
+	private String getSinglePrimaryKey(Class<?> clazz) {
+		List<Field> list=SqlProvider.getPrimaryKey(clazz);
+		if(list.size()>1||list.size()==0) {
+			throw new SmartJdbcException("PrimaryKey column can only be one");
 		}
-		return SmartJdbcConfig.getTableName(domainClass);
+		return list.get(0).getName();
 	}
 	//
-	public SqlBean queryCount(Class<?> domainClass,Query query) {
+	private Join getJoin(String key,List<Join> list) {
+		for (Join join : list) {
+			if(join.key.equals(key)) {
+				return join;
+			}
+		}
+		return null;
+	}
+	//
+	private Join createLeftJoin(String key,String table1Alias,String table2Alias,Class<?> table1,Class<?> table2,
+			String table1Field) {
+		Join join = new Join();
+		join.key=key;
+		join.table1Alias=table1Alias;
+		join.table2Alias=table2Alias;
+		join.table1=table1;
+		join.table2 = table2;
+		join.table1Field=table1Field;
+		join.table2Field= getSinglePrimaryKey(table2);
+		leftJoins.add(join);
+		return join;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	protected SqlBean queryCount() {
 		StringBuffer sql = new StringBuffer();
 		sql.append("select count(1) ");
-		return build(sql,domainClass,query,false);
+		this.needPaging=false;
+		return build(sql);
 	}
-	//
-	public SqlBean query(Class<?> domainClass,Query query,boolean needPaging) {
+	
+	/**
+	 * 
+	 * @return
+	 */
+	protected SqlBean query() {
 		StringBuffer sql = new StringBuffer();
-		buildSelectFields(domainClass);
+		buildSelectFields();
 		sql.append("select ");
 		if(selectFields.size()==0) {
 			throw new IllegalArgumentException("no select field found in "+domainClass.getName());
 		}
+		addSelectFields(sql);
+		return build(sql);
+	}
+	
+	private void addSelectFields(StringBuffer sql) {
 		for (SelectField field : selectFields) {
-			sql.append(field.tableAlias).append(".`").append(convertFieldName(field.field)).append("`");
+			if(StringUtil.isEmpty(field.statFunction)) {
+				sql.append(field.tableAlias).append(".`");
+				sql.append(convertFieldName(field.field)).append("`");
+			}else {
+				sql.append(field.statFunction);
+				sql.append("(");
+				sql.append(field.tableAlias).append(".`");
+				sql.append(convertFieldName(field.field)).append("`");
+				sql.append(")");
+			}
 			if(field.asField!=null) {
-				sql.append(" as `").append(field.asField).append("`");
+				sql.append(" as `").append(convertFieldName(field.asField)).append("`");
 			}
 			sql.append(",");
 		}
 		sql.deleteCharAt(sql.length()-1);
-		return build(sql,domainClass,query,false);
 	}
 	//
-	public SqlBean build(StringBuffer sql,Class<?> domainClass,Query query,boolean needPaging) {
+	private SqlBean build(StringBuffer sql) {
 		//from
 		sql.append(" from ").append(getTableName(domainClass)).append(" ").append(DEFAULT_MAIN_TABLE_ALIAS).append(" ");
 		//inner join
@@ -505,21 +591,55 @@ public class SelectSqlBuilder {
 				append(join.table2Alias).append(".").append(convertFieldName(join.table2Field));
 		}
 		//where
-		addCondition(query,needPaging);
+		addWheres(query);
 		sql.append(" where 1=1 ");
-		sql.append(whereStatement());
+		sql.append(qw.whereStatement());
+		
+		//group by
+		if(groupBys.size()>0) {
+			sql.append(" group by ");
+			for (GroupByField field : groupBys) {
+				if(!StringUtil.isEmpty(field.tableAlias)) {
+					sql.append(field.tableAlias).append(".");
+				}
+				sql.append(convertFieldName(field.field)).append(",");
+			}
+			sql.deleteCharAt(sql.length()-1);
+		}
+		
 		//order by
-		if (!StringUtil.isEmpty(orderBy)) {
-			sql.append(" order by ");
+		if(needOrderBy) {
+			addOrderBy(query);
+			if (!StringUtil.isEmpty(qw.orderBy)) {
+				sql.append(" order by ").append(qw.orderBy);
+			}
 		}
 		//limit
-		if (needPaging) {
-			sql.append(" limit ").append(limitStart).append(",").append(limitEnd);
+		if(needPaging) {
+			addPaging(query);
+			sql.append(" limit ").append(qw.limitStart).append(",").append(qw.limitEnd);
+		}
+		//for update
+		if(isForUpdate) {
+			sql.append(" for update ");
 		}
 		//
+		SqlBean bean=new SqlBean(sql.toString(),whereValues());
 		if(logger.isDebugEnabled()) {
-			logger.debug(DumpUtil.dump(this));
+			logger.debug("{} \nSqlBean:{}",DumpUtil.dump(this),DumpUtil.dump(bean));
 		}
-		return new SqlBean(sql.toString(),whereValues());
+		return bean;
+	}
+		
+	public Class<?> getDomainClass() {
+		return domainClass;
+	}
+
+	@Override
+	public SqlBean build() {
+		if(isSelectCount) {
+			return queryCount();
+		}
+		return query();
 	}
 }

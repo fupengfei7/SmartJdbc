@@ -17,11 +17,5 @@ import java.lang.annotation.Target;
 @Documented
 @Inherited  
 public @interface QueryDefine {
-	//
-	public @interface OrderBy {
-		  public int orderType();
-		  public String sql();
-	}
-	public Class<?> domainClass() default Void.class;
-	public OrderBy[] orderBys() default {};
+	public Class<?> domainClass();
 }

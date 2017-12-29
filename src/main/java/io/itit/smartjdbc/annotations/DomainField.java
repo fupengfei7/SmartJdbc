@@ -26,4 +26,7 @@ public @interface DomainField {
 
 	/**select distinct field*/
 	boolean distinct() default false;
+
+	/**select max() or sum() avg() */
+	String statFunc() default "";
 }
