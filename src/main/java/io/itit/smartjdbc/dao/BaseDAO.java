@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.mysql.jdbc.Statement;
 
 import io.itit.smartjdbc.ResultSetHandler;
-import io.itit.smartjdbc.datasource.ConnectionManager;
+import io.itit.smartjdbc.connection.ConnectionManager;
 import io.itit.smartjdbc.util.DBStat;
 import io.itit.smartjdbc.util.DumpUtil;
 import io.itit.smartjdbc.util.JdbcUtil;

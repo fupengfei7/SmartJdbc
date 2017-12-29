@@ -1,4 +1,4 @@
-package io.itit.smartjdbc.datasource;
+package io.itit.smartjdbc.connection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.SmartJdbcException;
-import io.itit.smartjdbc.connection.ConnectionHolder;
 import io.itit.smartjdbc.util.JdbcUtil;
 
 /**

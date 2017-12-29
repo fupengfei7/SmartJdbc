@@ -3,7 +3,7 @@ package test;
 import javax.sql.DataSource;
 
 import io.itit.smartjdbc.Config;
-import io.itit.smartjdbc.datasource.ConnectionManager;
+import io.itit.smartjdbc.connection.ConnectionManager;
 import io.itit.smartjdbc.datasource.DriverManagerDataSource;
 import junit.framework.TestCase;
 
