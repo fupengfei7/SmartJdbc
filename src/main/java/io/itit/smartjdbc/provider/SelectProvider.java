@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,11 +36,10 @@ public class SelectProvider extends SqlProvider{
 	//
 	private static Logger logger=LoggerFactory.getLogger(SelectProvider.class);
 	//
-	private static final String DEFAULT_MAIN_TABLE_ALIAS="a";
-	//
 	public static class SelectField{//select tableAlias.field as asField
 		public String tableAlias;
 		public String field;
+		public String preAsField;
 		public String asField;
 		public boolean distinct;
 		public String statFunction;
@@ -82,7 +80,7 @@ public class SelectProvider extends SqlProvider{
 	public SelectProvider(Class<?> domainClass) {
 		this.domainClass=domainClass;
 		this.selectFields=new ArrayList<>();
-		this.qw=new QueryWhere();
+		this.qw=QueryWhere.create();
 		this.groupBys=new ArrayList<>();
 		this.leftJoins=new ArrayList<>();
 		this.needOrderBy=true;
@@ -94,12 +92,12 @@ public class SelectProvider extends SqlProvider{
 	}
 	//
 	public SelectProvider sum(String sumField) {
-		sum(DEFAULT_MAIN_TABLE_ALIAS, sumField, sumField);
+		sum(MAIN_TABLE_ALIAS, sumField, sumField);
 		return this;
 	}
 	//
 	public SelectProvider sum(String alias,String field,String asField) {
-		select(alias, field, asField, false, "sum");
+		select(alias, field,null,asField, false, "sum");
 		return this;
 	}
 	//
@@ -118,33 +116,36 @@ public class SelectProvider extends SqlProvider{
 		return this;
 	}
 	//
-	public SelectProvider query(QueryWhere queryWhere) {
-		this.qw=queryWhere;
+	public SelectProvider query(QueryWhere qw) {
+		this.qw=qw;
 		return this;
 	}
 	//
 	public SelectProvider select(String field) {
-		return select(null, field, null, false,null);
+		return select(null, field);
 	}
 	//
 	public SelectProvider select(String tableAlias,String field) {
-		return select(tableAlias, field, null, false, null);
+		return select(tableAlias,field,null);
 	}
 	//
 	public SelectProvider select(String tableAlias,String field,String asAlias) {
-		return select(tableAlias, field, asAlias, false, null);
+		return select(tableAlias, field,null,asAlias, false, null);
 	}
 	//
-	public SelectProvider select(String tableAlias,String field,String asField,
-			boolean distinct,String statFunction) {
-		selectFields.add(createSelectField(tableAlias, field, asField, distinct, statFunction));
+	public SelectProvider select(String tableAlias,String field,
+			String preAsField,String asField,boolean distinct,String statFunction) {
+		selectFields.add(createSelectField(tableAlias, field, 
+				preAsField,asField, distinct, statFunction));
 		return this;
 	}
 	//
-	private SelectField createSelectField(String tableAlias,String field,String asField,boolean distinct,String statFunction) {
+	private SelectField createSelectField(String tableAlias,String field,
+			String preAsField,String asField,boolean distinct,String statFunction) {
 		SelectField sf=new SelectField();
 		sf.tableAlias=tableAlias;
 		sf.field=field;
+		sf.preAsField=preAsField;
 		sf.asField=asField;
 		sf.distinct=distinct;
 		sf.statFunction=statFunction;
@@ -156,43 +157,21 @@ public class SelectProvider extends SqlProvider{
 	}
 	//
 	public SelectProvider where(String key,Object value){
-		return this.where(DEFAULT_MAIN_TABLE_ALIAS,key, "=", value);
+		return this.where(MAIN_TABLE_ALIAS,key, "=", value);
 	}
 	//
 	public SelectProvider where(String alias,String key,String op,Object value){
-		Where w=new Where();
-		w.alias=alias;
-		w.key=key;
-		w.operator=op;
-		w.value=value;
-		qw.wheres.add(w);
+		qw.where(alias, key, op, value);
 		return this;
 	}
 	//
 	public SelectProvider whereSql(String sql,Object ...values){
-		Where w=new Where();
-		w.sql=sql;
-		for(int i=0;i<values.length;i++){
-			w.sqlValues.add(values[i]);
-		}
-		qw.wheres.add(w);
+		qw.whereSql(sql, values);
 		return this;
 	}
 	//
-	protected Object[] whereValues(){
-		List<Object>ret=new LinkedList<Object>();
-		for(Where w:qw.wheres){
-			if(w.key!=null){
-				ret.add(w.value);
-			}else{
-				ret.addAll(w.sqlValues);
-			}
-		}
-		return ret.toArray();
-	}
-	//
 	public SelectProvider groupBy(String field) {
-		groupBy(DEFAULT_MAIN_TABLE_ALIAS, field);
+		groupBy(MAIN_TABLE_ALIAS, field);
 		return this;
 	}
 	//
@@ -209,19 +188,17 @@ public class SelectProvider extends SqlProvider{
 	}
 	//
 	public SelectProvider orderBy(String orderBy){
-		qw.orderBy=orderBy;
+		qw.orderBy(orderBy);
 		return this;
 	}
 	//
 	public SelectProvider limit(int start,int limit){
-		qw.limitStart=start;
-		qw.limitEnd=limit;
+		qw.limit(start, limit);
 		return this;
 	}
 	//
 	public SelectProvider limit(int end){
-		qw.limitStart=0;
-		qw.limitEnd=end;
+		qw.limit(end);
 		return this;
 	}
 	//
@@ -291,7 +268,7 @@ public class SelectProvider extends SqlProvider{
 				continue;
 			}
 			Join join=new Join();
-			join.table1Alias=DEFAULT_MAIN_TABLE_ALIAS;
+			join.table1Alias=MAIN_TABLE_ALIAS;
 			join.table2Alias="i"+(index++);
 			join.table1Field=innerJoin.table1Field();
 			join.table2Field=innerJoin.table2Field();
@@ -316,7 +293,7 @@ public class SelectProvider extends SqlProvider{
 				Class<?> fieldType = field.getType();
 				Object value=field.get(q);
 				QueryField queryFieldDefine=field.getAnnotation(QueryField.class);
-				String alias = DEFAULT_MAIN_TABLE_ALIAS;
+				String alias = MAIN_TABLE_ALIAS;
 				InnerJoin innerJoin=field.getAnnotation(InnerJoin.class);
 				if(innerJoin!=null) {
 					String key=innerJoin.table2().getSimpleName()+"-"+
@@ -445,13 +422,13 @@ public class SelectProvider extends SqlProvider{
 			}
 			DomainField domainField = field.getAnnotation(DomainField.class);
 			if(domainField==null||StringUtil.isEmpty(domainField.foreignKeyFields())) {
-				select(DEFAULT_MAIN_TABLE_ALIAS, field.getName());
+				select(MAIN_TABLE_ALIAS, field.getName());
 				continue;
 			}
 			String foreignKeyId = domainField.foreignKeyFields();
 			String[] foreignKeyIds=foreignKeyId.split(",");
 			Class<?> table1=domainClass;
-			String table1Alias=DEFAULT_MAIN_TABLE_ALIAS;
+			String table1Alias=MAIN_TABLE_ALIAS;
 			Join join=null;
 			for (String id : foreignKeyIds) {
 				Field foreignKeyField=null;
@@ -487,10 +464,18 @@ public class SelectProvider extends SqlProvider{
 			}
 			boolean distinct=domainField.distinct();
 			String statFunc=domainField.statFunc();
-			if(StringUtil.isEmpty(domainField.field())) {
-				select(join.table2Alias,field.getName(),null,distinct,statFunc);
+			if(WRAP_TYPES.contains(field.getType())){
+				if(StringUtil.isEmpty(domainField.field())) {
+					select(join.table2Alias,field.getName(),null,null,distinct,statFunc);
+				}else {
+					select(join.table2Alias,domainField.field(),null,field.getName(),distinct,statFunc);
+				}
 			}else {
-				select(join.table2Alias,domainField.field(),field.getName(),distinct,statFunc);
+				List<Field> subClassFields=getPersistentFields((Class<?>)field.getGenericType());
+				for (Field subClassField : subClassFields) {
+					select(join.table2Alias,subClassField.getName(),field.getName()+"_",
+							subClassField.getName(),distinct,statFunc);
+				}
 			}
 		}
 	}
@@ -565,7 +550,11 @@ public class SelectProvider extends SqlProvider{
 				sql.append(")");
 			}
 			if(field.asField!=null) {
-				sql.append(" as `").append(convertFieldName(field.asField)).append("`");
+				String asField=convertFieldName(field.asField);
+				if(field.preAsField!=null) {
+					asField=field.preAsField+asField;
+				}
+				sql.append(" as `").append(asField).append("`");
 			}
 			sql.append(",");
 		}
@@ -574,7 +563,7 @@ public class SelectProvider extends SqlProvider{
 	//
 	private SqlBean build(StringBuffer sql) {
 		//from
-		sql.append(" from ").append(getTableName(domainClass)).append(" ").append(DEFAULT_MAIN_TABLE_ALIAS).append(" ");
+		sql.append(" from ").append(getTableName(domainClass)).append(" ").append(MAIN_TABLE_ALIAS).append(" ");
 		//inner join
 		this.innerJoins=getInnerJoins(query);
 		for (Join join : innerJoins.values()) {
@@ -593,6 +582,11 @@ public class SelectProvider extends SqlProvider{
 		//where
 		addWheres(query);
 		sql.append(" where 1=1 ");
+		for (Where w : qw.getWheres()) {
+			if(w.alias==null) {
+				w.alias=MAIN_TABLE_ALIAS;
+			}
+		}
 		sql.append(qw.whereStatement());
 		
 		//group by
@@ -610,21 +604,21 @@ public class SelectProvider extends SqlProvider{
 		//order by
 		if(needOrderBy) {
 			addOrderBy(query);
-			if (!StringUtil.isEmpty(qw.orderBy)) {
-				sql.append(" order by ").append(qw.orderBy);
+			if (!StringUtil.isEmpty(qw.getOrderBy())) {
+				sql.append(" order by ").append(qw.getOrderBy());
 			}
 		}
 		//limit
 		if(needPaging) {
 			addPaging(query);
-			sql.append(" limit ").append(qw.limitStart).append(",").append(qw.limitEnd);
+			sql.append(" limit ").append(qw.getLimitStart()).append(",").append(qw.getLimitEnd());
 		}
 		//for update
 		if(isForUpdate) {
 			sql.append(" for update ");
 		}
 		//
-		SqlBean bean=new SqlBean(sql.toString(),whereValues());
+		SqlBean bean=new SqlBean(sql.toString(),qw.whereValues());
 		if(logger.isDebugEnabled()) {
 			logger.debug("{} \nSqlBean:{}",DumpUtil.dump(this),DumpUtil.dump(bean));
 		}

@@ -20,6 +20,7 @@ import io.itit.smartjdbc.ResultSetHandler;
 import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
+import io.itit.smartjdbc.annotations.DomainField;
 import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.annotations.QueryDefine;
 import io.itit.smartjdbc.provider.DeleteProvider;
@@ -29,6 +30,7 @@ import io.itit.smartjdbc.provider.SqlProvider;
 import io.itit.smartjdbc.provider.UpdateProvider;
 import io.itit.smartjdbc.util.IOUtil;
 import io.itit.smartjdbc.util.JSONUtil;
+import io.itit.smartjdbc.util.StringUtil;
 
 /**
  * 
@@ -340,6 +342,10 @@ public class SmartDAO extends BaseDAO{
 		}
 	} 
 	//
+	protected void convertBean(Object o, ResultSet rs, String... excludeProperties)
+			throws Exception {
+		convertBean(o, null, rs, excludeProperties);
+	}
 	/**
 	 * 
 	 * @param o
@@ -347,7 +353,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param excludeProperties
 	 * @throws Exception
 	 */
-	protected void convertBean(Object o, ResultSet rs, String... excludeProperties)
+	protected void convertBean(Object o,String preAliasField,ResultSet rs, String... excludeProperties)
 			throws Exception {
 		Set<String> excludesNames = new TreeSet<String>();
 		for (String e : excludeProperties) {
@@ -363,8 +369,12 @@ public class SmartDAO extends BaseDAO{
 				continue;
 			}
 			String fieldName = convertFieldName(f.getName());
+			if(preAliasField!=null) {
+				fieldName=preAliasField+fieldName;
+			}
 			Class<?> fieldType = f.getType();
-			if (Modifier.isStatic(f.getModifiers())) {
+			if (Modifier.isStatic(f.getModifiers())||
+					Modifier.isFinal(f.getModifiers())) {
 				continue;
 			}
 			Object value = null;
@@ -400,19 +410,27 @@ public class SmartDAO extends BaseDAO{
 					value = bos.toByteArray();
 				}
 			} else {
-				String strValue=rs.getString(fieldName);
-				if(strValue!=null){
-					Type genericType=f.getGenericType();
-					if ( genericType instanceof ParameterizedType ) {  
-						 Type[] typeArguments = ((ParameterizedType)genericType).getActualTypeArguments();  
-						 if(typeArguments.length==1) {
-							 if(List.class.isAssignableFrom(fieldType) && (typeArguments[0] instanceof Class)) {
-								 value=JSONUtil.fromJsonList(strValue,(Class<?>) typeArguments[0]);
+				DomainField domainField=f.getAnnotation(DomainField.class);
+				if(domainField==null||StringUtil.isEmpty(domainField.foreignKeyFields())) {
+					String strValue=rs.getString(fieldName);
+					if(strValue!=null){
+						Type genericType=f.getGenericType();
+						if ( genericType instanceof ParameterizedType ) {  
+							 Type[] typeArguments = ((ParameterizedType)genericType).getActualTypeArguments();  
+							 if(typeArguments.length==1) {
+								 if(List.class.isAssignableFrom(fieldType) && (typeArguments[0] instanceof Class)) {
+									 value=JSONUtil.fromJsonList(strValue,(Class<?>) typeArguments[0]);
+								 }
 							 }
+						 }else {
+							 value=JSONUtil.fromJson(strValue,fieldType);
 						 }
-					 }else {
-						 value=JSONUtil.fromJson(strValue,fieldType);
-					 }
+					}
+				}else {
+					Class<?> subClass=((Class<?>)f.getGenericType());
+					value=subClass.newInstance();
+					String subPreAliasField=f.getName()+"_";
+					convertBean(value, subPreAliasField, rs, excludeProperties);
 				}
 			}
 			f.setAccessible(true);

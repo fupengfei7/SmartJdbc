@@ -31,6 +31,8 @@ public abstract class SqlProvider {
 	//
 	private static Logger logger=LoggerFactory.getLogger(SqlProvider.class);
 	//
+	public static final String MAIN_TABLE_ALIAS="a";
+	//
 	protected static final HashSet<Class<?>> WRAP_TYPES=new HashSet<>();
 	static{
 		WRAP_TYPES.add(Boolean.class);

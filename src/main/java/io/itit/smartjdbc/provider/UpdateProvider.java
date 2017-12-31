@@ -20,14 +20,20 @@ import io.itit.smartjdbc.util.JSONUtil;
 public class UpdateProvider extends SqlProvider{
 	//
 	Object bean;
+	QueryWhere qw;
 	String[] excludeProperties;
 	boolean excludeNull;
 	//
 	public UpdateProvider(Object bean,boolean excludeNull,String ... excludeProperties) {
+		this(bean, null, excludeNull, excludeProperties);
+	}
+	//
+	public UpdateProvider(Object bean,QueryWhere qw,boolean excludeNull,String ... excludeProperties) {
 		this.bean=bean;
+		this.qw=qw;
 		this.excludeNull=excludeNull;
 		this.excludeProperties=excludeProperties;
-	}
+	} 
 	//
 	@Override
 	public SqlBean build() {
@@ -67,13 +73,16 @@ public class UpdateProvider extends SqlProvider{
 		}
 		sql.deleteCharAt(sql.length()-1);
 		sql.append(" where 1=1");
-		List<Field> primaryKey=getPrimaryKey(bean.getClass());
-		QueryWhere qt=QueryWhere.create();
-		for (Field field : primaryKey) {
-			qt.where(convertFieldName(field.getName()),getFieldValue(bean, field.getName()));
+		//
+		if(qw==null) {//默认where主键
+			qw=QueryWhere.create();
+			List<Field> primaryKey=getPrimaryKey(bean.getClass());
+			for (Field field : primaryKey) {
+				qw.where(convertFieldName(field.getName()),getFieldValue(bean, field.getName()));
+			}
 		}
-		sql.append(qt.whereStatement());
-		for(Object o:qt.whereValues()){
+		sql.append(qw.whereStatement());
+		for(Object o:qw.whereValues()){
 			fieldList.add(o);
 		}
 		return createSqlBean(sql.toString(), fieldList.toArray(new Object[fieldList.size()]));

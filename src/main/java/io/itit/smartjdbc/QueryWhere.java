@@ -11,7 +11,6 @@ import java.util.List;
 public class QueryWhere {
 	//
 	public static class Where{
-		//
 		public String alias;
 		public String key;
 		public Object value;
@@ -23,11 +22,12 @@ public class QueryWhere {
 		}
 	}
 	//
-	public List<Where>wheres;
-	public String orderBy;
-	public int limitStart=0;
-	public int limitEnd=-1;
-	public QueryWhere() {
+	protected List<Where> wheres;
+	protected String orderBy;
+	protected int limitStart=0;
+	protected int limitEnd=-1;
+	//
+	private QueryWhere() {
 		wheres=new LinkedList<Where>();
 	}
 	//
@@ -119,4 +119,28 @@ public class QueryWhere {
 		sql.append(" ");
 		return sql.toString();
 	}
+	//
+	/**
+	 * @return the orderBy
+	 */
+	public String getOrderBy() {
+		return orderBy;
+	}
+	/**
+	 * @return the limitStart
+	 */
+	public int getLimitStart() {
+		return limitStart;
+	}
+	/**
+	 * @return the limitEnd
+	 */
+	public int getLimitEnd() {
+		return limitEnd;
+	}
+	
+	public List<Where> getWheres() {
+		return wheres;
+	}
+	
 }

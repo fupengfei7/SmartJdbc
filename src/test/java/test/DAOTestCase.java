@@ -11,6 +11,7 @@ import io.itit.smartjdbc.util.DumpUtil;
 import test.dao.BizDAO;
 import test.domain.DiscountCoupon;
 import test.domain.User;
+import test.domain.info.DiscountCouponDetailInfo;
 import test.domain.info.DiscountCouponInfo;
 import test.domain.info.UserInfo;
 import test.domain.info.query.DiscountCouponInfoQuery;
@@ -83,7 +84,7 @@ public class DAOTestCase extends BaseTestCase{
 	}
 	
 	public void testDeleteUser() {
-		int count=dao.delete(User.class, QueryWhere.create().where("id", 2));
+		int count=dao.delete(User.class, QueryWhere.create().where("id", 3));
 		System.out.println(count);
 	}
 	//
@@ -101,11 +102,8 @@ public class DAOTestCase extends BaseTestCase{
 	//
 	//
 	//
-	public void testGetUserInfo() {
-		UserInfoQuery query=new UserInfoQuery();
-		query.gender=1;
-		query.roleName="总经理";
-		dao.getDomain(query);
+	public void testGetUserInfoById() {
+		dao.getById(UserInfo.class,1);
 	}
 	//
 	public void testGetUserInfos() {
@@ -122,22 +120,26 @@ public class DAOTestCase extends BaseTestCase{
 		dao.getListCount(query);
 	}
 	//
-	public void testDiscountCouponInfo() {
-		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
-		query.createUserName="刘备";
-		dao.getDomain(query);
+	public void testGetDiscountCouponInfo() {
+		dao.getById(DiscountCouponInfo.class,1);
 	}
 	//
-	public void testDiscountCouponInfos() {
+	public void testGetDiscountCouponInfos() {
 		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
 		query.createUserName="刘备";
 		List<DiscountCouponInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
 	}
 	//
-	public void testDiscountCouponInfosCount() {
+	public void testGetDiscountCouponInfosCount() {
 		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
 		query.createUserName="刘备";
 		dao.getListCount(query);
 	}
+	//
+	//
+	public void testGetDiscountCouponDetailInfo() {
+		dao.getById(DiscountCouponDetailInfo.class,1);
+	}
+	//
 }
