@@ -421,10 +421,17 @@ public class SelectProvider extends SqlProvider{
 				continue;
 			}
 			DomainField domainField = field.getAnnotation(DomainField.class);
-			if(domainField==null||StringUtil.isEmpty(domainField.foreignKeyFields())) {
+			if(domainField==null) {
 				select(MAIN_TABLE_ALIAS, field.getName());
 				continue;
 			}
+			boolean distinct=domainField.distinct();
+			String statFunc=domainField.statFunc();
+			if(StringUtil.isEmpty(domainField.foreignKeyFields())) {
+				select(MAIN_TABLE_ALIAS, field.getName(),null,null,distinct,statFunc);
+				continue;
+			}
+			
 			String foreignKeyId = domainField.foreignKeyFields();
 			String[] foreignKeyIds=foreignKeyId.split(",");
 			Class<?> table1=domainClass;
@@ -462,8 +469,6 @@ public class SelectProvider extends SqlProvider{
 				table1=table2;
 				table1Alias=join.table2Alias;
 			}
-			boolean distinct=domainField.distinct();
-			String statFunc=domainField.statFunc();
 			if(WRAP_TYPES.contains(field.getType())){
 				if(StringUtil.isEmpty(domainField.field())) {
 					select(join.table2Alias,field.getName(),null,null,distinct,statFunc);
@@ -539,6 +544,9 @@ public class SelectProvider extends SqlProvider{
 	
 	private void addSelectFields(StringBuffer sql) {
 		for (SelectField field : selectFields) {
+			if(field.distinct) {
+				sql.append(" distinct ");
+			}
 			if(StringUtil.isEmpty(field.statFunction)) {
 				sql.append(field.tableAlias).append(".`");
 				sql.append(convertFieldName(field.field)).append("`");

@@ -141,5 +141,4 @@ public class DAOTestCase extends BaseTestCase{
 	public void testGetDiscountCouponDetailInfo() {
 		dao.getById(DiscountCouponDetailInfo.class,1);
 	}
-	//
 }
