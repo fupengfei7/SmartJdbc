@@ -127,6 +127,7 @@ public class DAOTestCase extends BaseTestCase{
 	public void testGetDiscountCouponInfos() {
 		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
 		query.createUserName="刘备";
+		query.statusList=new int[] {1,2};
 		List<DiscountCouponInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
 	}
@@ -134,7 +135,8 @@ public class DAOTestCase extends BaseTestCase{
 	public void testGetDiscountCouponInfosCount() {
 		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
 		query.createUserName="刘备";
-		dao.getListCount(query);
+		query.statusList=new int[] {1,2};
+		System.out.println(DumpUtil.dump(dao.getListCount(query)));
 	}
 	//
 	//

@@ -26,5 +26,6 @@ public class DiscountCouponInfoQuery extends Query{
 	@QueryField(field="name")
 	public String updateUserName;
 	
+	@QueryField(field="status")
 	public int[] statusList;
 }

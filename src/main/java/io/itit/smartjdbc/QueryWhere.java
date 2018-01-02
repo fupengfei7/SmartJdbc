@@ -39,21 +39,8 @@ public class QueryWhere {
 		return this.where(key, "=", value);
 	}
 	//
-	public QueryWhere whereSql(String sql,Object ...values){
-		Where w=new Where();
-		w.sql=sql;
-		for(int i=0;i<values.length;i++){
-			w.sqlValues.add(values[i]);
-		}
-		this.wheres.add(w);
-		return this;
-	}
 	public QueryWhere where(String key,String op,Object value){
-		Where w=new Where();
-		w.key=key;
-		w.operator=op;
-		w.value=value;
-		this.wheres.add(w);
+		this.where(null, key, op, value);
 		return this;
 	}
 	//
@@ -63,6 +50,21 @@ public class QueryWhere {
 		w.key=key;
 		w.operator=op;
 		w.value=value;
+		this.wheres.add(w);
+		return this;
+	}
+	//
+	public  QueryWhere in(String alias,String key,Object[] values) {
+		this.where(alias, key, "in", values);
+		return this;
+	}
+	//
+	public QueryWhere whereSql(String sql,Object ...values){
+		Where w=new Where();
+		w.sql=sql;
+		for(int i=0;i<values.length;i++){
+			w.sqlValues.add(values[i]);
+		}
 		this.wheres.add(w);
 		return this;
 	}
@@ -88,7 +90,16 @@ public class QueryWhere {
 		List<Object>ret=new LinkedList<Object>();
 		for(Where w:wheres){
 			if(w.key!=null){
-				ret.add(w.value);
+				if(w.operator.equals("in")) {
+					Object[] values=(Object[])w.value;
+					if(values!=null&&values.length>0) {
+						for (Object value : values) {
+							ret.add(value);
+						}
+					}
+				}else {
+					ret.add(w.value);
+				}
 			}else{
 				ret.addAll(w.sqlValues);
 			}
@@ -109,6 +120,16 @@ public class QueryWhere {
 				sql.append(w.operator).append(" ");
 				if(w.operator.trim().equalsIgnoreCase("like")){
 					sql.append(" concat('%',?,'%') ");
+				}else if(w.operator.trim().equalsIgnoreCase("in")) {
+					Object[] values=(Object[])w.value;
+					if(values!=null&&values.length>0) {
+						sql.append(" ( ");
+						for (int i = 0; i < values.length; i++) {
+							sql.append(" ?,");
+						}
+						sql.deleteCharAt(sql.length() - 1);
+						sql.append(" ) ");
+					}
 				}else{
 					sql.append(" ? ");
 				}

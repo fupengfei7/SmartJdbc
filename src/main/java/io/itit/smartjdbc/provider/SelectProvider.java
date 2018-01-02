@@ -24,6 +24,7 @@ import io.itit.smartjdbc.annotations.OrderBys.OrderBy;
 import io.itit.smartjdbc.annotations.QueryDefine;
 import io.itit.smartjdbc.annotations.QueryField;
 import io.itit.smartjdbc.annotations.QueryField.WhereSql;
+import io.itit.smartjdbc.util.ArrayUtils;
 import io.itit.smartjdbc.util.DumpUtil;
 import io.itit.smartjdbc.util.StringUtil;
 
@@ -162,6 +163,11 @@ public class SelectProvider extends SqlProvider{
 	//
 	public SelectProvider where(String alias,String key,String op,Object value){
 		qw.where(alias, key, op, value);
+		return this;
+	}
+	//
+	public SelectProvider in(String alias,String key,Object[] values){
+		qw.in(alias, key, values);
 		return this;
 	}
 	//
@@ -304,7 +310,7 @@ public class SelectProvider extends SqlProvider{
 				//
 				if(queryFieldDefine!=null&&queryFieldDefine.whereSql()!=null&&(!StringUtil.isEmpty(queryFieldDefine.whereSql().sql()))) {//whereSql check first
 					WhereSql whereSql=queryFieldDefine.whereSql();
-					whereSql(whereSql.sql(),convert(whereSql.values()));
+					whereSql(whereSql.sql(),ArrayUtils.convert(whereSql.values()));
 				}else {
 					String dbFieldName=convertFieldName(field.getName());
 					if(queryFieldDefine!=null&&(!StringUtil.isEmpty(queryFieldDefine.field()))) {
@@ -317,13 +323,19 @@ public class SelectProvider extends SqlProvider{
 					if (StringUtil.isEmpty(operator)) {
 						if(fieldType.equals(String.class)) {//字符串默认like
 							operator="like";
-						}else if (fieldType.equals(int[].class)) {//int[] 默认 in
-							int[] values=(int[])value;
-							List<Integer> intList = new ArrayList<Integer>();
-							for (int index = 0; index < values.length; index++){
-							    intList.add(values[index]);
+						}else if (fieldType.equals(int[].class)||
+								fieldType.equals(short[].class)||
+								fieldType.equals(byte[].class)||
+								fieldType.equals(String[].class)) {
+							if(fieldType.equals(int[].class)) {
+								in(alias, dbFieldName, ArrayUtils.convert((int[])value));
+							}else if(fieldType.equals(short[].class)) {
+								in(alias, dbFieldName, ArrayUtils.convert((short[])value));
+							}else if(fieldType.equals(byte[].class)) {
+								in(alias, dbFieldName, ArrayUtils.convert((byte[])value));
+							}else if(fieldType.equals(String[].class)) {
+								in(alias, dbFieldName, ArrayUtils.convert((String[])value));
 							}
-							addInCondition(alias,dbFieldName,true,intList);
 							continue;
 						}else {
 							operator="=";
@@ -336,54 +348,6 @@ public class SelectProvider extends SqlProvider{
 				throw new IllegalArgumentException(e.getMessage());
 			}
 		}
-	}
-	//
-	protected SelectProvider addInCondition(String alias,String field, boolean withFieldEscape,
-			List<? extends Object> values) {
-		Object[] valueArray = null;
-		if (values != null) {
-			valueArray = values.toArray();
-		}
-		return addInCondition(alias,field, withFieldEscape, valueArray);
-	}
-
-	//
-	protected SelectProvider addInCondition(String alias,String field, boolean withFieldEscape,
-			Object[] values) {
-		if (values == null) {
-			return this;
-		}
-		int len = values.length;
-		if (len == 0) {
-			return this;
-		}
-		StringBuffer buffer = new StringBuffer();
-		buffer.append(" and ");
-		if (withFieldEscape) {
-			buffer.append("`");
-			buffer.append(field);
-			buffer.append("`");
-		} else {
-			buffer.append(field);
-		}
-		buffer.append(" in ( ");
-		for (int i = 0; i < len; i++) {
-			buffer.append(" ?,");
-		}
-		buffer.deleteCharAt(buffer.length() - 1);
-		buffer.append(" ) ");
-		return whereSql(buffer.toString(), values);
-	}
-	//
-	protected static Object[] convert(String[] values) {
-		if(values==null) {
-			return null;
-		}
-		Object[] oValues=new Object[values.length];
-		for(int i=0;i<values.length;i++) {
-			oValues[i]=values[i];
-		}
-		return oValues;
 	}
 	//
 	protected void addOrderBy(Query query) {
