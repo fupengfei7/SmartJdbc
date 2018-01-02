@@ -153,7 +153,7 @@ public class SmartDAO extends BaseDAO{
 	/**
 	 * 
 	 * @param domainClass
-	 * @param qt
+	 * @param qw
 	 * @return
 	 */
 	public int delete(Class<?> domainClass,QueryWhere qw){
@@ -167,13 +167,13 @@ public class SmartDAO extends BaseDAO{
 	/**
 	 * 
 	 * @param domainClass
-	 * @param qt
+	 * @param qw
 	 */
-	protected void beforeDelete(Class<?> domainClass, QueryWhere qt) {
+	protected void beforeDelete(Class<?> domainClass, QueryWhere qw) {
 		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
-				interceptor.beforeDelete(domainClass, qt);
+				interceptor.beforeDelete(domainClass, qw);
 			}
 		}
 	}

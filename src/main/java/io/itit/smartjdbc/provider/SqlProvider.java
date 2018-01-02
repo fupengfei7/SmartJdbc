@@ -113,7 +113,7 @@ public abstract class SqlProvider {
 	
 	/**
 	 * 
-	 * @param o
+	 * @param clazz
 	 * @return
 	 */
 	public static List<Field> getPrimaryKey(Class<?> clazz){

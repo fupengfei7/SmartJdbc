@@ -280,8 +280,7 @@ public class SelectProvider extends SqlProvider{
 	//
 	/**
 	 * 
-	 * @param query
-	 * @param needPaging
+	 * @param q
 	 */
 	protected void addWheres(Query q) {
 		if(q==null) {

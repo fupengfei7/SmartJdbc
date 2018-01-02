@@ -105,16 +105,18 @@ public class Config {
 	public static Map<String, DataSource> getDataSources() {
 		return dataSources;
 	}
+	
 	/**
 	 * 
-	 * @param dataSources
+	 * @param dataSource
 	 */
 	public static void addDataSource(DataSource dataSource) {
 		dataSources.put(DEFAULT_DATASOURCE_INDEX,dataSource);
 	}
 	/**
 	 * 
-	 * @param dataSources
+	 * @param dataSourceIndex
+	 * @param dataSource
 	 */
 	public static void addDataSource(String dataSourceIndex,DataSource dataSource) {
 		dataSources.put(dataSourceIndex,dataSource);
