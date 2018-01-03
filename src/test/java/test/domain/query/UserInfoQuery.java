@@ -1,4 +1,4 @@
-package test.domain.info.query;
+package test.domain.query;
 
 import javax.management.relation.Role;
 

@@ -14,8 +14,8 @@ import test.domain.User;
 import test.domain.info.DiscountCouponDetailInfo;
 import test.domain.info.DiscountCouponInfo;
 import test.domain.info.UserInfo;
-import test.domain.info.query.DiscountCouponInfoQuery;
-import test.domain.info.query.UserInfoQuery;
+import test.domain.query.DiscountCouponInfoQuery;
+import test.domain.query.UserInfoQuery;
 import test.domain.query.UserQuery;
 
 /**

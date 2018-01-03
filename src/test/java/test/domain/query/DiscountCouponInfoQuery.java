@@ -1,4 +1,4 @@
-package test.domain.info.query;
+package test.domain.query;
 
 import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.annotations.InnerJoin;

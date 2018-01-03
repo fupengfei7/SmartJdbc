@@ -18,6 +18,7 @@ import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.annotations.DomainField;
 import io.itit.smartjdbc.annotations.ForeignKey;
 import io.itit.smartjdbc.annotations.InnerJoin;
+import io.itit.smartjdbc.annotations.LeftJoin;
 import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.annotations.OrderBys;
 import io.itit.smartjdbc.annotations.OrderBys.OrderBy;
@@ -390,60 +391,70 @@ public class SelectProvider extends SqlProvider{
 			}
 			boolean distinct=domainField.distinct();
 			String statFunc=domainField.statFunc();
-			if(StringUtil.isEmpty(domainField.foreignKeyFields())) {
-				select(MAIN_TABLE_ALIAS, field.getName(),null,null,distinct,statFunc);
-				continue;
+			String reallyName=field.getName();
+			if(!StringUtil.isEmpty(domainField.field())) {
+				reallyName=domainField.field();
 			}
-			
-			String foreignKeyId = domainField.foreignKeyFields();
-			String[] foreignKeyIds=foreignKeyId.split(",");
-			Class<?> table1=domainClass;
-			String table1Alias=MAIN_TABLE_ALIAS;
-			Join join=null;
-			for (String id : foreignKeyIds) {
-				Field foreignKeyField=null;
-				try {
-					foreignKeyField=table1.getField(id);
-				} catch (Exception e) {
-					logger.error(e.getMessage(),e);
-					throw new IllegalArgumentException(e.getMessage()+"/"+table1.getSimpleName());
-				}
-				ForeignKey foreignKey=foreignKeyField.getAnnotation(ForeignKey.class);
-				if(foreignKey==null) {
-					throw new IllegalArgumentException("@ForeignKey not found in "+
-								domainClass.getSimpleName()+"."+foreignKeyField.getName());
-				}
-				Class<?> table2=foreignKey.domainClass();
-				String key=id;
-				if(join==null) {
-					join = map.get(key);
+			//
+			LeftJoin leftJoin=field.getAnnotation(LeftJoin.class);
+			if(leftJoin!=null) {
+				Join join=createLeftJoin(field.getName(),MAIN_TABLE_ALIAS,"l"+(index++),
+						domainClass,leftJoin.table2(),leftJoin.table1Field(),leftJoin.table2Field());
+				select(join.table2Alias,reallyName,null,field.getName(),distinct,statFunc);
+			}else if(!StringUtil.isEmpty(domainField.foreignKeyFields())) {
+				String foreignKeyId = domainField.foreignKeyFields();
+				String[] foreignKeyIds=foreignKeyId.split(",");
+				Class<?> table1=domainClass;
+				String table1Alias=MAIN_TABLE_ALIAS;
+				Join join=null;
+				for (String id : foreignKeyIds) {
+					Field foreignKeyField=null;
+					try {
+						foreignKeyField=table1.getField(id);
+					} catch (Exception e) {
+						logger.error(e.getMessage(),e);
+						throw new IllegalArgumentException(e.getMessage()+"/"+table1.getSimpleName());
+					}
+					ForeignKey foreignKey=foreignKeyField.getAnnotation(ForeignKey.class);
+					if(foreignKey==null) {
+						throw new IllegalArgumentException("@ForeignKey not found in "+
+									domainClass.getSimpleName()+"."+foreignKeyField.getName());
+					}
+					Class<?> table2=foreignKey.domainClass();
+					String key=id;
 					if(join==null) {
-						join=createLeftJoin(key,table1Alias,"l"+(index++),table1, table2,id);
-						map.put(key, join);
+						join = map.get(key);
+						if(join==null) {
+							join=createLeftJoin(key,table1Alias,"l"+(index++),table1, table2,id);
+							map.put(key, join);
+						}
+					}else {
+						Join childJoin=getJoin(key, join.joins);
+						if(childJoin==null) {
+							childJoin=createLeftJoin(key,table1Alias,"l"+(index++),table1,table2,id);
+							join.joins.add(childJoin);
+						}
+						join=childJoin;
 					}
-				}else {
-					Join childJoin=getJoin(key, join.joins);
-					if(childJoin==null) {
-						childJoin=createLeftJoin(key,table1Alias,"l"+(index++),table1,table2,id);
-						join.joins.add(childJoin);
-					}
-					join=childJoin;
+					table1=table2;
+					table1Alias=join.table2Alias;
 				}
-				table1=table2;
-				table1Alias=join.table2Alias;
-			}
-			if(WRAP_TYPES.contains(field.getType())){
-				if(StringUtil.isEmpty(domainField.field())) {
-					select(join.table2Alias,field.getName(),null,null,distinct,statFunc);
+				if(WRAP_TYPES.contains(field.getType())){
+					if(StringUtil.isEmpty(domainField.field())) {
+						select(join.table2Alias,field.getName(),null,null,distinct,statFunc);
+					}else {
+						select(join.table2Alias,domainField.field(),null,field.getName(),distinct,statFunc);
+					}
 				}else {
-					select(join.table2Alias,domainField.field(),null,field.getName(),distinct,statFunc);
+					List<Field> subClassFields=getPersistentFields((Class<?>)field.getGenericType());
+					for (Field subClassField : subClassFields) {
+						select(join.table2Alias,subClassField.getName(),field.getName()+"_",
+								subClassField.getName(),distinct,statFunc);
+					}
 				}
 			}else {
-				List<Field> subClassFields=getPersistentFields((Class<?>)field.getGenericType());
-				for (Field subClassField : subClassFields) {
-					select(join.table2Alias,subClassField.getName(),field.getName()+"_",
-							subClassField.getName(),distinct,statFunc);
-				}
+				select(MAIN_TABLE_ALIAS, field.getName(),null,null,distinct,statFunc);
+				continue;
 			}
 		}
 	}
@@ -467,6 +478,11 @@ public class SelectProvider extends SqlProvider{
 	//
 	private Join createLeftJoin(String key,String table1Alias,String table2Alias,Class<?> table1,Class<?> table2,
 			String table1Field) {
+		return createLeftJoin(key, table1Alias, table2Alias, table1, table2, table1Field, getSinglePrimaryKey(table2));
+	}
+	//
+	private Join createLeftJoin(String key,String table1Alias,String table2Alias,Class<?> table1,Class<?> table2,
+			String table1Field,String table2Field) {
 		Join join = new Join();
 		join.key=key;
 		join.table1Alias=table1Alias;
@@ -474,7 +490,7 @@ public class SelectProvider extends SqlProvider{
 		join.table1=table1;
 		join.table2 = table2;
 		join.table1Field=table1Field;
-		join.table2Field= getSinglePrimaryKey(table2);
+		join.table2Field= table2Field;
 		leftJoins.add(join);
 		return join;
 	}
