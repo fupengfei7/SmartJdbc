@@ -8,7 +8,7 @@ package io.itit.smartjdbc.util;
 public class ArrayUtils {
 
 	//
-	public static Object[] convert(int[] t) {
+	public static Object[] convert(final int[] t) {
 		if(t==null) {
 			return null;
 		}
@@ -19,7 +19,7 @@ public class ArrayUtils {
 		return ret;
 	}
 	//
-	public static  Object[] convert(byte[] t) {
+	public static  Object[] convert(final byte[] t) {
 		if(t==null) {
 			return null;
 		}
@@ -30,7 +30,7 @@ public class ArrayUtils {
 		return ret;
 	}
 	//
-	public static  Object[] convert(short[] t) {
+	public static  Object[] convert(final short[] t) {
 		if(t==null) {
 			return null;
 		}
@@ -41,7 +41,7 @@ public class ArrayUtils {
 		return ret;
 	}
 	//
-	public static  <T> Object[] convert(T[] t) {
+	public static  <T> Object[] convert(final T[] t) {
 		if(t==null) {
 			return null;
 		}

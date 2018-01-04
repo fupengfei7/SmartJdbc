@@ -15,7 +15,7 @@ import javax.sql.DataSource;
  */
 public class Config {
 	//
-	public static final String DEFAULT_DATASOURCE_INDEX="default";
+	public static final String DEFAULT_DATASOURCE_INDEX="master";
 	/**
 	 * 
 	 */
