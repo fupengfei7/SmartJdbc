@@ -543,7 +543,7 @@ public class SmartDAO extends BaseDAO{
 		}
 		Map<String,Object> paraMap=new HashMap<>();
 		if(parameters!=null) {
-			int index=0;
+			int index=1;
 			for (Object para : parameters) {
 				if(para instanceof Param) {
 					Param p=(Param) para;

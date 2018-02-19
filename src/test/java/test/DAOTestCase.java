@@ -65,7 +65,7 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testQueryUsers() {
 		List<User> users=dao.queryList(User.class, 
-				"select * from User where userName like concat('%',#{para0},'%') and id=#{para1}", 
+				"select * from User where userName like concat('%',#{para1},'%') and id=#{para2}", 
 				"liu",
 				1);
 		System.out.println(DumpUtil.dump(users));
@@ -81,7 +81,7 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testQueryUsersCount() {
 		int count=dao.queryListCount(
-				"select count(1) from User where userName like concat('%',#{para0},'%') and id=#{para1}", 
+				"select count(1) from User where userName like concat('%',#{para1},'%') and id=#{para2}", 
 				"liu",
 				1);
 		System.out.println(count);
