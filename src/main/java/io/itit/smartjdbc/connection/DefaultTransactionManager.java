@@ -86,8 +86,6 @@ public class DefaultTransactionManager implements TransactionManager{
 
 	/**
 	 * 
-	 * @return
-	 * @throws SQLException
 	 */
 	public Connection getConnecton(String datasourceIndex){
 		Connection conn=null;
