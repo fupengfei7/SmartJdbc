@@ -8,6 +8,9 @@ import java.util.function.Function;
 
 import javax.sql.DataSource;
 
+import io.itit.smartjdbc.connection.ConnectionManager;
+import io.itit.smartjdbc.connection.TransactionManager;
+
 /**
  * 
  * @author skydu
@@ -120,5 +123,12 @@ public class Config {
 	 */
 	public static void addDataSource(String dataSourceIndex,DataSource dataSource) {
 		dataSources.put(dataSourceIndex,dataSource);
+	}
+	/**
+	 * 
+	 * @param transactionManager
+	 */
+	public static void setTransactionManager(TransactionManager transactionManager) {
+		ConnectionManager.setTransactionManager(transactionManager);
 	}
 }

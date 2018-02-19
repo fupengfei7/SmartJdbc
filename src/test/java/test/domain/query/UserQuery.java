@@ -4,6 +4,7 @@ import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.annotations.OrderBys;
 import io.itit.smartjdbc.annotations.OrderBys.OrderBy;
 import io.itit.smartjdbc.annotations.QueryDefine;
+import io.itit.smartjdbc.annotations.QueryField;
 import test.domain.User;
 
 /**
@@ -23,6 +24,9 @@ public class UserQuery extends Query{
 	public String userName;
 	
 	public Integer gender;
+	
+	@QueryField(whereSql="and (name like #{nameOrUserName} or userName like #{nameOrUserName})")
+	public String nameOrUserName;
 	
 	
 }

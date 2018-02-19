@@ -64,7 +64,8 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testGetUsers() {
 		UserQuery query=new UserQuery();
-		query.userName="t";
+		query.userName="i";
+		query.nameOrUserName="刘";
 		query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
 		List<User> list=dao.getList(query);
 		System.out.println(DumpUtil.dump(list));

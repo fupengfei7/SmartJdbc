@@ -3,9 +3,12 @@ package io.itit.smartjdbc.provider;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +27,6 @@ import io.itit.smartjdbc.annotations.OrderBys;
 import io.itit.smartjdbc.annotations.OrderBys.OrderBy;
 import io.itit.smartjdbc.annotations.QueryDefine;
 import io.itit.smartjdbc.annotations.QueryField;
-import io.itit.smartjdbc.annotations.QueryField.WhereSql;
 import io.itit.smartjdbc.util.ArrayUtils;
 import io.itit.smartjdbc.util.DumpUtil;
 import io.itit.smartjdbc.util.StringUtil;
@@ -293,7 +295,17 @@ public class SelectProvider extends SqlProvider{
 		if(q==null) {
 			return;
 		}
+		Map<String,Object> paraMap=new HashMap<>();
 		List<Field> fields=getQueryFields(q);
+		for (Field field : fields) {
+			try {
+				Object value=field.get(q);
+				paraMap.put("#{"+field.getName()+"}", value);
+			} catch (Exception e) {
+				logger.error(e.getMessage(),e);
+				throw new SmartJdbcException(e.getMessage());
+			}
+		}
 		for (Field field : fields) {
 			try {
 				Class<?> fieldType = field.getType();
@@ -309,9 +321,10 @@ public class SelectProvider extends SqlProvider{
 					alias=join.table2Alias;
 				}
 				//
-				if(queryFieldDefine!=null&&queryFieldDefine.whereSql()!=null&&(!StringUtil.isEmpty(queryFieldDefine.whereSql().sql()))) {//whereSql check first
-					WhereSql whereSql=queryFieldDefine.whereSql();
-					whereSql(whereSql.sql(),ArrayUtils.convert(whereSql.values()));
+				if(queryFieldDefine!=null&&queryFieldDefine.whereSql()!=null&&(!StringUtil.isEmpty(queryFieldDefine.whereSql()))) {//whereSql check first
+					String whereSql=queryFieldDefine.whereSql();
+					SqlBean sqlBean=parseSql(whereSql, paraMap);
+					whereSql(sqlBean.sql,sqlBean.parameters);
 				}else {
 					String dbFieldName=convertFieldName(field.getName());
 					if(queryFieldDefine!=null&&(!StringUtil.isEmpty(queryFieldDefine.field()))) {
@@ -349,6 +362,29 @@ public class SelectProvider extends SqlProvider{
 				throw new IllegalArgumentException(e.getMessage());
 			}
 		}
+	}
+	//
+	private SqlBean parseSql(String sql,Map<String,Object> paraMap) {
+		Pattern p=Pattern.compile("\\#\\{[a-zA-Z_$][a-zA-Z0-9_$]*\\}");
+		Matcher m = p.matcher(sql);
+		List<String> groups=new ArrayList<>();
+		while(m.find()) { 
+		    groups.add(m.group());
+		}
+		if(groups.isEmpty()) {
+			return new SqlBean(sql);
+		}
+		sql=m.replaceAll("?");
+		Object[] values=new Object[groups.size()];
+		int i=0;
+		for (String group : groups) {
+			Object value=paraMap.get(group);
+			if(value==null) {
+				throw new SmartJdbcException(group+" not found.sql error:"+sql); 
+			}
+			values[i++]=value;
+		}
+		return new SqlBean(sql,values);
 	}
 	//
 	protected void addOrderBy(Query query) {
@@ -598,7 +634,9 @@ public class SelectProvider extends SqlProvider{
 		//limit
 		if(needPaging) {
 			addPaging(query);
-			sql.append(" limit ").append(qw.getLimitStart()).append(",").append(qw.getLimitEnd());
+			if(qw.getLimitEnd()!=-1) {
+				sql.append(" limit ").append(qw.getLimitStart()).append(",").append(qw.getLimitEnd());
+			}
 		}
 		//for update
 		if(isForUpdate) {

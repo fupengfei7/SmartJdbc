@@ -24,7 +24,6 @@ public abstract class BaseTestCase extends TestCase{
 	protected void setUp() throws Exception {
 		super.setUp();
 		Config.addDataSource(createDriverManagerDataSource(dbName));
-		ConnectionManager.startTransaction(true);
 	}
 	
 	@Override
