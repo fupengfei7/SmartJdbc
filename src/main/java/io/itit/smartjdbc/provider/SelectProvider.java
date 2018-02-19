@@ -323,7 +323,7 @@ public class SelectProvider extends SqlProvider{
 				//
 				if(queryFieldDefine!=null&&queryFieldDefine.whereSql()!=null&&(!StringUtil.isEmpty(queryFieldDefine.whereSql()))) {//whereSql check first
 					String whereSql=queryFieldDefine.whereSql();
-					SqlBean sqlBean=parseSql(whereSql, paraMap);
+					SqlBean sqlBean=parseSql(whereSql, paraMap);//eg:userName like #{userName}
 					whereSql(sqlBean.sql,sqlBean.parameters);
 				}else {
 					String dbFieldName=convertFieldName(field.getName());
@@ -363,8 +363,16 @@ public class SelectProvider extends SqlProvider{
 			}
 		}
 	}
+	public static boolean preParseSql(String sql) {
+		Pattern p=Pattern.compile("\\#\\{[a-zA-Z_$][a-zA-Z0-9_$]*\\}");
+		Matcher m = p.matcher(sql);
+		if(m.find()) { 
+		    return true;
+		}
+		return false;
+	}
 	//
-	private SqlBean parseSql(String sql,Map<String,Object> paraMap) {
+	public static SqlBean parseSql(String sql,Map<String,Object> paraMap) {
 		Pattern p=Pattern.compile("\\#\\{[a-zA-Z_$][a-zA-Z0-9_$]*\\}");
 		Matcher m = p.matcher(sql);
 		List<String> groups=new ArrayList<>();
@@ -374,17 +382,18 @@ public class SelectProvider extends SqlProvider{
 		if(groups.isEmpty()) {
 			return new SqlBean(sql);
 		}
-		sql=m.replaceAll("?");
+		String newSql=m.replaceAll("?");
 		Object[] values=new Object[groups.size()];
 		int i=0;
 		for (String group : groups) {
 			Object value=paraMap.get(group);
 			if(value==null) {
-				throw new SmartJdbcException(group+" not found.sql error:"+sql); 
+				throw new SmartJdbcException(group+" not found.\nsql:"+sql+
+						"\nall can choose paras is:"+paraMap.keySet()); 
 			}
 			values[i++]=value;
 		}
-		return new SqlBean(sql,values);
+		return new SqlBean(newSql,values);
 	}
 	//
 	protected void addOrderBy(Query query) {

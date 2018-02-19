@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.DAOInterceptor;
+import io.itit.smartjdbc.Param;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.util.DumpUtil;
 import test.dao.BizDAO;
@@ -60,6 +61,43 @@ public class DAOTestCase extends BaseTestCase{
 	public void testGetById() {
 		User user=dao.getById(User.class, 1);
 		System.out.println(DumpUtil.dump(user));
+	}
+	
+	public void testQueryUsers() {
+		List<User> users=dao.queryList(User.class, 
+				"select * from User where userName like concat('%',#{para0},'%') and id=#{para1}", 
+				"liu",
+				1);
+		System.out.println(DumpUtil.dump(users));
+	}
+	
+	public void testQueryUsers2() {
+		List<User> users=dao.queryList(User.class, 
+				"select * from User where userName like concat('%',#{userName},'%') and id=#{id}", 
+				new Param("userName", "liu"),
+				new Param("id", 1));
+		System.out.println(DumpUtil.dump(users));
+	}
+	
+	public void testQueryUsersCount() {
+		int count=dao.queryListCount(
+				"select count(1) from User where userName like concat('%',#{para0},'%') and id=#{para1}", 
+				"liu",
+				1);
+		System.out.println(count);
+	}
+	
+	public void testQueryUsersCount2() {
+		int count=dao.queryListCount(
+				"select count(1) from User where userName like concat('%',#{userName},'%') and id=#{id}", 
+				new Param("userName", "liu"),
+				new Param("id", 1));
+		System.out.println(count);
+	}
+	
+	public void testGetUserIds() {
+		List<Integer> userIds=dao.queryForIntegers("select id from User");
+		System.out.println(DumpUtil.dump(userIds));
 	}
 	
 	public void testGetUsers() {

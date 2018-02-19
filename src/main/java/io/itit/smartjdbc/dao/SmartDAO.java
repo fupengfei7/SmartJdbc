@@ -9,15 +9,18 @@ import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.DAOInterceptor;
+import io.itit.smartjdbc.Param;
 import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.ResultSetHandler;
-import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.annotations.DomainField;
@@ -460,7 +463,8 @@ public class SmartDAO extends BaseDAO{
 			String sql,
 			ResultSetHandler<T> rowHandler, 
 			Object... parameters) {
-		return queryForList(sql, rowHandler, parameters);
+		SqlBean sqlBean=parseSql(sql, parameters);
+		return queryForList(sqlBean.sql, rowHandler, sqlBean.parameters);
 	}
 	
 	/**
@@ -474,13 +478,27 @@ public class SmartDAO extends BaseDAO{
 			Class<T> domainClass,
 			String sql,
 			Object... parameters) {
-		return queryForList(sql, new ResultSetHandler<T>() {
+		SqlBean sqlBean=parseSql(sql, parameters);
+		return queryForList(sqlBean.sql, new ResultSetHandler<T>() {
 			@Override
 			public T handleRow(ResultSet row) throws Exception {
 				T o=domainClass.newInstance();
 				convertBean(o,row);
 				return o;
-			}}, parameters);
+			}}, sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param sql
+	 * @param parameters
+	 * @return
+	 */
+	public int queryListCount(
+			String sql,
+			Object... parameters) {
+		SqlBean sqlBean=parseSql(sql, parameters);
+		return queryForInteger(sqlBean.sql, sqlBean.parameters);
 	}
 	/**
 	 * 
@@ -493,13 +511,14 @@ public class SmartDAO extends BaseDAO{
 			Class<T> domainClass,
 			String sql,
 			Object... parameters) {
-		return queryForObject(sql, new ResultSetHandler<T>() {
+		SqlBean sqlBean=parseSql(sql, parameters);
+		return queryForObject(sqlBean.sql, new ResultSetHandler<T>() {
 			@Override
 			public T handleRow(ResultSet row) throws Exception {
 				T o=domainClass.newInstance();
 				convertBean(o,row);
 				return o;
-			}}, parameters);
+			}}, sqlBean.parameters);
 	}
 	
 	/**
@@ -513,9 +532,32 @@ public class SmartDAO extends BaseDAO{
 			String sql,
 			ResultSetHandler<T> rowHandler, 
 			Object... parameters) {
-		return queryForObject(sql, rowHandler, parameters);
+		SqlBean sqlBean=parseSql(sql, parameters);
+		return queryForObject(sqlBean.sql, rowHandler, sqlBean.parameters);
 	}
 	
+	
+	public SqlBean parseSql(String sql,Object... parameters) {
+		if(!SelectProvider.preParseSql(sql)) {
+			return new SqlBean(sql, parameters);
+		}
+		Map<String,Object> paraMap=new HashMap<>();
+		if(parameters!=null) {
+			int index=0;
+			for (Object para : parameters) {
+				if(para instanceof Param) {
+					Param p=(Param) para;
+					if(StringUtil.isEmpty(p.name)){
+						throw new SmartJdbcException("Param name cann't be null");
+					}
+					paraMap.put("#{"+p.name+"}", p.value);
+				}else {
+					paraMap.put("#{para"+(index++)+"}", para);
+				}
+			}
+		}
+		return SelectProvider.parseSql(sql, paraMap);//#
+	}
 	/**
 	 * 
 	 * @param domainClass

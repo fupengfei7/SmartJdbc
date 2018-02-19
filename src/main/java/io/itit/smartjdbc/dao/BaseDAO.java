@@ -334,47 +334,84 @@ public abstract class BaseDAO{
 	}
 	
 	//
-	protected final Boolean queryForBoolean(String sql,Object ...parameters){
+	public final Boolean queryForBoolean(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getBoolean(1), parameters);
 	}
 	//
-	protected final String queryForString(String sql,Object ...parameters){
+	public final String queryForString(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getString(1), parameters);
 	}
 	//
-	protected final Double queryForDouble(String sql,Object ...parameters){
+	public final Double queryForDouble(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getDouble(1), parameters);
 	}
 	//
-	protected final Float queryForFloat(String sql,Object ...parameters){
+	public final Float queryForFloat(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getFloat(1), parameters);
 	}
 	//
-	protected final Integer queryForInteger(String sql,Object ...parameters){
+	public final Integer queryForInteger(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getInt(1), parameters);
 	}
 	//
-	protected final Long queryForLong(String sql,Object ...parameters){
+	public final Long queryForLong(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getLong(1), parameters);
 	}
 	//
-	protected final Short queryForShort(String sql,Object ...parameters){
+	public final Short queryForShort(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getShort(1), parameters);
-		
 	}
 	//
-	protected final BigDecimal queryForBigDecimal(String sql,Object ...parameters){
+	public final BigDecimal queryForBigDecimal(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getBigDecimal(1), parameters);
-		
 	}
 	//
-	protected final Byte queryForByte(String sql,Object ...parameters){
+	public final Byte queryForByte(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getByte(1), parameters);
-		
 	}
 	//
-	protected final  Date queryForDate(String sql,Object ...parameters){
+	public final  Date queryForDate(String sql,Object ...parameters){
 		return  queryForObject(sql,rs->rs.getTimestamp(1), parameters);
+	}
+	//
+	public final List<Boolean> queryForBooleans(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getBoolean(1), parameters);
+	}
+	//
+	public final List<String> queryForStrings(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getString(1), parameters);
+	}
+	//
+	public final List<Double> queryForDoubles(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getDouble(1), parameters);
+	}
+	//
+	public final List<Float> queryForFloats(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getFloat(1), parameters);
+	}
+	//
+	public final List<Integer> queryForIntegers(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getInt(1), parameters);
+	}
+	//
+	public final List<Long> queryForLongs(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getLong(1), parameters);
+	}
+	//
+	public final List<Short> queryForShorts(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getShort(1), parameters);	
+	}
+	//
+	public final List<BigDecimal> queryForBigDecimals(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getBigDecimal(1), parameters);
+	}
+	//
+	public final List<Byte> queryForBytes(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getByte(1), parameters);
+	}
+	//
+	public final List<Date> queryForDates(String sql,Object ...parameters){
+		return  queryForList(sql,rs->rs.getTimestamp(1), parameters);
 	}
 	//
 	public String getDatasourceIndex() {
