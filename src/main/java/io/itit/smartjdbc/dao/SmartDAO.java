@@ -42,7 +42,7 @@ import io.itit.smartjdbc.util.StringUtil;
  * @author skydu
  */
 public class SmartDAO extends BaseDAO{
-	
+	//
 	/**
 	 * 
 	 * @param o
@@ -375,7 +375,7 @@ public class SmartDAO extends BaseDAO{
 		int columnCount=rsmd.getColumnCount();
 		Set<String> columnNames=new HashSet<>();
 		for(int i=1;i<=columnCount;i++) {
-			columnNames.add(rsmd.getColumnName(i));
+			columnNames.add(rsmd.getColumnLabel(i));
 		}
 		for (Field f : type.getFields()) {
 			if (excludesNames.contains(f.getName())) {
