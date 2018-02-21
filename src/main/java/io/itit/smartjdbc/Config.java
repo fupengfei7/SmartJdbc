@@ -27,6 +27,10 @@ public class Config {
 	 * 
 	 */
 	private static List<DAOInterceptor> daoInterceptors=new ArrayList<>();
+	/**
+	 * 
+	 */
+	private static List<SqlInterceptor> sqlInterceptors=new ArrayList<>();
 	//
 	/**
 	 * default domainClass's name
@@ -130,5 +134,25 @@ public class Config {
 	 */
 	public static void setTransactionManager(TransactionManager transactionManager) {
 		ConnectionManager.setTransactionManager(transactionManager);
+	}
+	//
+	/**
+	 * @return the sqlInterceptors
+	 */
+	public static List<SqlInterceptor> getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+	/**
+	 * @param sqlInterceptors the sqlInterceptors to set
+	 */
+	public static void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
+		Config.sqlInterceptors = sqlInterceptors;
+	}
+	/**
+	 * 
+	 * @param sqlInterceptor
+	 */
+	public static void addSqlInterceptor(SqlInterceptor sqlInterceptor) {
+		sqlInterceptors.add(sqlInterceptor);
 	}
 }

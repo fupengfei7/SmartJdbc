@@ -8,6 +8,7 @@ import java.util.TreeSet;
 
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
+import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.util.JSONUtil;
 
 /**
@@ -40,6 +41,10 @@ public class InsertProvider extends SqlProvider{
 		List<Field> fl=getPersistentFields(type);
 		for (Field f : fl) {
 			if (excludesNames.contains(f.getName())) {
+				continue;
+			}
+			NonPersistent nonPersistent=f.getAnnotation(NonPersistent.class);
+			if(nonPersistent!=null) {
 				continue;
 			}
 			String fieldName = convertFieldName(f.getName());

@@ -80,7 +80,7 @@ public class DAOTestCase extends BaseTestCase{
 	}
 	
 	public void testQueryUsersCount() {
-		int count=dao.queryListCount(
+		int count=dao.queryCount(
 				"select count(1) from User where userName like concat('%',?,'%') and id=?", 
 				"liu",
 				1);
@@ -88,7 +88,7 @@ public class DAOTestCase extends BaseTestCase{
 	}
 	
 	public void testQueryUsersCount2() {
-		int count=dao.queryListCount(
+		int count=dao.queryCount(
 				"select count(1) from User where userName like concat('%',#{userName},'%') and id=#{id}", 
 				new Param("userName", "liu"),
 				new Param("id", 1));

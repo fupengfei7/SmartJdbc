@@ -510,7 +510,7 @@ public class SmartDAO extends BaseDAO{
 	 * @param parameters
 	 * @return
 	 */
-	public int queryListCount(
+	public int queryCount(
 			String sql,
 			Object... parameters) {
 		SqlBean sqlBean=parseSql(sql, parameters);
