@@ -26,7 +26,6 @@ import io.itit.smartjdbc.ResultSetHandler;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.annotations.DomainField;
-import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.annotations.QueryDefine;
 import io.itit.smartjdbc.provider.DeleteProvider;
 import io.itit.smartjdbc.provider.InsertProvider;
@@ -379,9 +378,6 @@ public class SmartDAO extends BaseDAO{
 		}
 		for (Field f : type.getFields()) {
 			if (excludesNames.contains(f.getName())) {
-				continue;
-			}
-			if(f.getAnnotation(NonPersistent.class)!=null) {
 				continue;
 			}
 			String fieldName = convertFieldName(f.getName());

@@ -10,7 +10,7 @@ import io.itit.smartjdbc.annotations.QueryField;
 public class Query {
 	//
 	@QueryField(ingore=true)
-	public int pageIndex;//从0开始
+	public int pageIndex=1;//从1开始
 	
 	@QueryField(ingore=true)
 	public int pageSize=20;
@@ -29,6 +29,6 @@ public class Query {
 	}
 	//
 	public int getStartPageIndex(){
-		return pageIndex*pageSize;
+		return (pageIndex-1)*pageSize;
 	}
 }
