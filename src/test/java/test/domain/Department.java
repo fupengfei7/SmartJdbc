@@ -8,4 +8,6 @@ package test.domain;
 public class Department extends BaseDomain{
 
 	public String name;
+	
+	public int status;
 }

@@ -7,18 +7,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * on a.table1Field=table2Alias.table2Field
+ * 
  * @author skydu
  *
  */
 @Target(ElementType.FIELD)  
 @Retention(RetentionPolicy.RUNTIME)  
 @Documented
-public @interface InnerJoin {
+public @interface InnerJoins {
 	//
-	public String table1Field();
-
-	public String table2Field() default "id";
-
-	public Class<?> table2() default void.class;
+	public InnerJoin[] innerJoins() default {};
 }

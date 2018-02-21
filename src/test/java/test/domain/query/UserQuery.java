@@ -25,7 +25,7 @@ public class UserQuery extends Query{
 	
 	public Integer gender;
 	
-	@QueryField(whereSql="and (name like #{nameOrUserName} or userName like #{nameOrUserName})")
+	@QueryField(whereSql="and (name like concat('%',#{nameOrUserName},'%') or userName like concat('%',#{nameOrUserName},'%'))")
 	public String nameOrUserName;
 	
 	

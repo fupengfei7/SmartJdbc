@@ -4,9 +4,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +23,7 @@ import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.annotations.DomainField;
 import io.itit.smartjdbc.annotations.ForeignKey;
 import io.itit.smartjdbc.annotations.InnerJoin;
+import io.itit.smartjdbc.annotations.InnerJoins;
 import io.itit.smartjdbc.annotations.LeftJoin;
 import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.annotations.OrderBys;
@@ -76,7 +79,10 @@ public class SelectProvider extends SqlProvider{
 	boolean needOrderBy;
 	boolean isForUpdate;
 	List<SelectField> selectFields;
-	Map<String,Join> innerJoins;//inner join tableName alias on 
+	Set<String> excludeFields;//userName not user_name
+	Map<String,Join> innerJoinMap;
+	Map<String,String> queryFieldAliasMap;
+	List<Join> innerJoins;//inner join tableName alias on 
 	List<Join> leftJoins;//left join tableName alias on 
 	QueryWhere qw;
 	List<GroupByField> groupBys;
@@ -84,9 +90,11 @@ public class SelectProvider extends SqlProvider{
 	public SelectProvider(Class<?> domainClass) {
 		this.domainClass=domainClass;
 		this.selectFields=new ArrayList<>();
+		this.excludeFields=new HashSet<>();
 		this.qw=QueryWhere.create();
 		this.groupBys=new ArrayList<>();
 		this.leftJoins=new ArrayList<>();
+		this.innerJoins=new ArrayList<>();
 		this.needOrderBy=true;
 	}
 	//
@@ -141,6 +149,15 @@ public class SelectProvider extends SqlProvider{
 			String preAsField,String asField,boolean distinct,String statFunction) {
 		selectFields.add(createSelectField(tableAlias, field, 
 				preAsField,asField, distinct, statFunction));
+		return this;
+	}
+	//
+	public SelectProvider excludeFields(String ... fields){
+		if(fields!=null) {
+			for (String field : fields) {
+				excludeFields.add(field);
+			}
+		}
 		return this;
 	}
 	//
@@ -248,6 +265,22 @@ public class SelectProvider extends SqlProvider{
 		return fieldList;
 	}
 	//
+	private boolean isValidInnerJoin(InnerJoin innerJoin) {
+		if(innerJoin==null) {
+			return false;
+		}
+		if(innerJoin.table2().equals(void.class)) {
+			throw new SmartJdbcException("@InnerJoin table2 cannot be null");
+		}
+		if(StringUtil.isEmpty(innerJoin.table1Field())) {
+			throw new SmartJdbcException("@InnerJoin table1Field cannot be null");
+		}
+		if(StringUtil.isEmpty(innerJoin.table2Field())) {
+			throw new SmartJdbcException("@InnerJoin table2Field cannot be null");
+		}
+		return true;
+	}
+	//
 	protected Map<String, Join> getInnerJoins(Query query) {
 		Map<String, Join> map = new LinkedHashMap<>();
 		if(query==null) {
@@ -260,31 +293,112 @@ public class SelectProvider extends SqlProvider{
 		}
 		List<Field> fields=getQueryFields(query);
 		int index = 1;
+		queryFieldAliasMap=new HashMap<>();
 		for (Field field : fields) {
 			InnerJoin innerJoin=field.getAnnotation(InnerJoin.class);
-			if(innerJoin==null) {
+			InnerJoins innerJoins=field.getAnnotation(InnerJoins.class);
+			QueryField queryField=field.getAnnotation(QueryField.class);
+			String foreignKeyFields="";
+			if(queryField!=null) {
+				foreignKeyFields=queryField.foreignKeyFields();
+			}
+			if(innerJoin==null&&innerJoins==null&&StringUtil.isEmpty(foreignKeyFields)) {
 				continue;
 			}
-			if(innerJoin.table2().equals(void.class)||
-					StringUtil.isEmpty(innerJoin.table1Field())||
-					StringUtil.isEmpty(innerJoin.table2Field())) {
+			List<InnerJoin> innerJoinsList=new ArrayList<>();
+			if(isValidInnerJoin(innerJoin)) {
+				innerJoinsList.add(innerJoin);
+			}
+			if(innerJoins!=null&&innerJoins.innerJoins()!=null) {
+				for (InnerJoin join : innerJoins.innerJoins()) {
+					if(isValidInnerJoin(join)) {
+						innerJoinsList.add(join);
+					}
+				}
+			}
+			if(innerJoinsList.size()>0) {//use annotation
+				Join join=null;
+				Class<?> table1=domainClass;
+				String table1Alias=MAIN_TABLE_ALIAS;
+				for (InnerJoin j: innerJoinsList) {
+					String key=j.table1Field();
+					if(join==null) {
+						join = map.get(key);
+						if(join==null) {
+							join=createInnerJoin(key,table1Alias,"i"+(index++),table1,j.table2(),j.table1Field(),
+									j.table2Field());
+							map.put(key, join);
+						}
+					}else {
+						Join childJoin=getJoin(key, join.joins);
+						if(childJoin==null) {
+							childJoin=createInnerJoin(key,table1Alias,"i"+(index++),table1,j.table2(),j.table1Field(),
+									j.table2Field());
+							join.joins.add(childJoin);
+						}
+						join=childJoin;
+					}
+					table1=join.table2;
+					table1Alias=join.table2Alias;
+				}
+				queryFieldAliasMap.put(field.getName(), table1Alias);
+			}else if(!StringUtil.isEmpty(foreignKeyFields)) {
+				String[] foreignKeyIds=foreignKeyFields.split(",");
+				Class<?> table1=domainClass;
+				String table1Alias=MAIN_TABLE_ALIAS;
+				Join join=null;
+				for (String id : foreignKeyIds) {
+					Field foreignKeyField=null;
+					try {
+						foreignKeyField=table1.getField(id);
+					} catch (Exception e) {
+						logger.error(e.getMessage(),e);
+						throw new IllegalArgumentException(e.getMessage()+"/"+table1.getSimpleName());
+					}
+					ForeignKey foreignKey=foreignKeyField.getAnnotation(ForeignKey.class);
+					if(foreignKey==null) {
+						throw new IllegalArgumentException("@ForeignKey not found in "+
+									domainClass.getSimpleName()+"."+foreignKeyField.getName());
+					}
+					Class<?> table2=foreignKey.domainClass();
+					String key=id;
+					if(join==null) {
+						join = map.get(key);
+						if(join==null) {
+							join=createInnerJoin(key,table1Alias,"i"+(index++),table1, table2,id,"id");
+							map.put(key, join);
+						}
+					}else {
+						Join childJoin=getJoin(key, join.joins);
+						if(childJoin==null) {
+							childJoin=createInnerJoin(key,table1Alias,"l"+(index++),table1,table2,id,"id");
+							join.joins.add(childJoin);
+						}
+						join=childJoin;
+					}
+					table1=table2;
+					table1Alias=join.table2Alias;
+				}
+				queryFieldAliasMap.put(field.getName(), table1Alias);
+			}else {
 				continue;
 			}
-			String key=innerJoin.table2().getSimpleName()+"-"+
-					innerJoin.table1Field()+"-"+
-					innerJoin.table2Field();
-			if(map.containsKey(key)){
-				continue;
-			}
-			Join join=new Join();
-			join.table1Alias=MAIN_TABLE_ALIAS;
-			join.table2Alias="i"+(index++);
-			join.table1Field=innerJoin.table1Field();
-			join.table2Field=innerJoin.table2Field();
-			join.table2=innerJoin.table2();
-			map.put(key, join);
 		}
 		return map;
+	}
+	//
+	private Join createInnerJoin(String key,String table1Alias,String table2Alias,
+			Class<?> table1,Class<?> table2,String table1Field,String table2Field) {
+		Join join=new Join();
+		join.key=key;
+		join.table1Alias=table1Alias;
+		join.table2Alias=table2Alias;
+		join.table1Field=table1Field;
+		join.table2Field=table2Field;
+		join.table1=table1;
+		join.table2=table2;
+		this.innerJoins.add(join);
+		return join;
 	}
 	//
 	/**
@@ -310,29 +424,27 @@ public class SelectProvider extends SqlProvider{
 			try {
 				Class<?> fieldType = field.getType();
 				Object value=field.get(q);
-				QueryField queryFieldDefine=field.getAnnotation(QueryField.class);
+				QueryField queryField=field.getAnnotation(QueryField.class);
 				String alias = MAIN_TABLE_ALIAS;
+				InnerJoins innerJoins=field.getAnnotation(InnerJoins.class);
 				InnerJoin innerJoin=field.getAnnotation(InnerJoin.class);
-				if(innerJoin!=null) {
-					String key=innerJoin.table2().getSimpleName()+"-"+
-							innerJoin.table1Field()+"-"+
-							innerJoin.table2Field();
-					Join join=innerJoins.get(key);
-					alias=join.table2Alias;
+				if(innerJoin!=null||(innerJoins!=null&&innerJoins.innerJoins()!=null)||
+						(queryField!=null&&!StringUtil.isEmpty(queryField.foreignKeyFields()))) {
+					alias=queryFieldAliasMap.get(field.getName());
 				}
 				//
-				if(queryFieldDefine!=null&&queryFieldDefine.whereSql()!=null&&(!StringUtil.isEmpty(queryFieldDefine.whereSql()))) {//whereSql check first
-					String whereSql=queryFieldDefine.whereSql();
+				if(queryField!=null&&queryField.whereSql()!=null&&(!StringUtil.isEmpty(queryField.whereSql()))) {//whereSql check first
+					String whereSql=queryField.whereSql();
 					SqlBean sqlBean=parseSql(whereSql, paraMap);//eg:userName like #{userName}
 					whereSql(sqlBean.sql,sqlBean.parameters);
 				}else {
 					String dbFieldName=convertFieldName(field.getName());
-					if(queryFieldDefine!=null&&(!StringUtil.isEmpty(queryFieldDefine.field()))) {
-						dbFieldName=convertFieldName(queryFieldDefine.field());
+					if(queryField!=null&&(!StringUtil.isEmpty(queryField.field()))) {
+						dbFieldName=convertFieldName(queryField.field());
 					}
 					String operator="";
-					if(queryFieldDefine!=null&&(!StringUtil.isEmpty(queryFieldDefine.operator()))) {
-						operator=queryFieldDefine.operator();
+					if(queryField!=null&&(!StringUtil.isEmpty(queryField.operator()))) {
+						operator=queryField.operator();
 					}
 					if (StringUtil.isEmpty(operator)) {
 						if(fieldType.equals(String.class)) {//字符串默认like
@@ -429,6 +541,9 @@ public class SelectProvider extends SqlProvider{
 			if (nonPersistent!=null) {
 				continue;
 			}
+			if(excludeFields.contains(field.getName())){
+				continue;
+			}	
 			DomainField domainField = field.getAnnotation(DomainField.class);
 			if(domainField==null) {
 				select(MAIN_TABLE_ALIAS, field.getName());
@@ -597,8 +712,8 @@ public class SelectProvider extends SqlProvider{
 		//from
 		sql.append(" from ").append(getTableName(domainClass)).append(" ").append(MAIN_TABLE_ALIAS).append(" ");
 		//inner join
-		this.innerJoins=getInnerJoins(query);
-		for (Join join : innerJoins.values()) {
+		this.innerJoinMap=getInnerJoins(query);
+		for (Join join : innerJoins) {
 			sql.append(" inner join  ");
 			sql.append(getTableName(join.table2)).append(" ").append(join.table2Alias);
 			sql.append(" on ").append(join.table1Alias).append(".`"+convertFieldName(join.table1Field)+"`=").

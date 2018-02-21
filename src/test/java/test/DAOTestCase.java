@@ -65,7 +65,7 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testQueryUsers() {
 		List<User> users=dao.queryList(User.class, 
-				"select * from User where userName like concat('%',#{para1},'%') and id=#{para2}", 
+				"select * from User where userName like concat('%'?,'%') and id=?", 
 				"liu",
 				1);
 		System.out.println(DumpUtil.dump(users));
@@ -81,7 +81,7 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testQueryUsersCount() {
 		int count=dao.queryListCount(
-				"select count(1) from User where userName like concat('%',#{para1},'%') and id=#{para2}", 
+				"select count(1) from User where userName like concat('%',?,'%') and id=?", 
 				"liu",
 				1);
 		System.out.println(count);
@@ -96,16 +96,21 @@ public class DAOTestCase extends BaseTestCase{
 	}
 	
 	public void testGetUserIds() {
-		List<Integer> userIds=dao.queryForIntegers("select id from User");
+		List<Integer> userIds=dao.queryForIntegers("select id from User where id=#{id}",
+				new Param("id", 1));
+		System.out.println(DumpUtil.dump(userIds));
+		//
+		userIds=dao.queryForIntegers("select id from User where id=?",
+				1);
 		System.out.println(DumpUtil.dump(userIds));
 	}
 	
 	public void testGetUsers() {
 		UserQuery query=new UserQuery();
 		query.userName="i";
-		query.nameOrUserName="刘";
+		query.nameOrUserName="关";
 		query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
-		List<User> list=dao.getList(query);
+		List<User> list=dao.getList(query,"createTime","updateTime");
 		System.out.println(DumpUtil.dump(list));
 	}
 	
@@ -120,6 +125,11 @@ public class DAOTestCase extends BaseTestCase{
 		User user=dao.getById(User.class, 1);
 		user.description="测试描述";
 		dao.update(user);
+	}
+	
+	public void testUpdateUser2() {
+		dao.executeUpdate("update User set name='关羽0' where id=?",1);
+		dao.executeUpdate("update User set name='关羽2' where id=#{id}",new Param("id", 1));
 	}
 	
 	public void testDeleteUser() {
@@ -166,6 +176,10 @@ public class DAOTestCase extends BaseTestCase{
 	public void testGetDiscountCouponInfos() {
 		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
 		query.createUserName="刘备";
+		query.updateUserDepartmentName="总办";
+		query.updateUserDepartmentStatus=1;
+		query.updateUserDepartmentName2="总";
+		query.updateUserDepartmentStatus2=2;
 		query.statusList=new int[] {1,2};
 		List<DiscountCouponInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
