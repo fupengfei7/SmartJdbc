@@ -362,6 +362,7 @@ public class SelectProvider extends SqlProvider{
 					Class<?> table2=foreignKey.domainClass();
 					String key=id+"-"+table2.getName();
 					if(join==null) {
+						
 						join = map.get(key);
 						if(join==null) {
 							join=createInnerJoin(key,table1Alias,"i"+(index++),table1, table2,id,"id");
