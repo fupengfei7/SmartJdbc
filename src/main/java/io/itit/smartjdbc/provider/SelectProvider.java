@@ -80,7 +80,7 @@ public class SelectProvider extends SqlProvider{
 	List<SelectField> selectFields;
 	Set<String> excludeFields;//userName not user_name
 	Map<String,Join> innerJoinMap;
-	Map<String,String> queryFieldAliasMap;
+	Map<String,String> innerJoinFieldAliasMap;
 	List<Join> innerJoins;//inner join tableName alias on 
 	List<Join> leftJoins;//left join tableName alias on 
 	QueryWhere qw;
@@ -292,7 +292,7 @@ public class SelectProvider extends SqlProvider{
 		}
 		List<Field> fields=getQueryFields(query);
 		int index = 1;
-		queryFieldAliasMap=new HashMap<>();
+		innerJoinFieldAliasMap=new HashMap<>();
 		for (Field field : fields) {
 			InnerJoin innerJoin=field.getAnnotation(InnerJoin.class);
 			InnerJoins innerJoins=field.getAnnotation(InnerJoins.class);
@@ -320,7 +320,7 @@ public class SelectProvider extends SqlProvider{
 				Class<?> table1=domainClass;
 				String table1Alias=MAIN_TABLE_ALIAS;
 				for (InnerJoin j: innerJoinsList) {
-					String key=j.table1Field()+"-"+j.table2().getName();
+					String key=j.table1Field()+"-"+j.table2().getName()+"-"+j.table2Field();
 					if(join==null) {
 						join = map.get(key);
 						if(join==null) {
@@ -340,7 +340,7 @@ public class SelectProvider extends SqlProvider{
 					table1=join.table2;
 					table1Alias=join.table2Alias;
 				}
-				queryFieldAliasMap.put(field.getName(), table1Alias);
+				innerJoinFieldAliasMap.put(field.getName(), table1Alias);
 			}else if(!StringUtil.isEmpty(foreignKeyFields)) {
 				String[] foreignKeyIds=foreignKeyFields.split(",");
 				Class<?> table1=domainClass;
@@ -360,7 +360,7 @@ public class SelectProvider extends SqlProvider{
 									domainClass.getSimpleName()+"."+foreignKeyField.getName());
 					}
 					Class<?> table2=foreignKey.domainClass();
-					String key=id+"-"+table2.getName();
+					String key=id+"-"+table2.getName()+"-"+"id";
 					if(join==null) {
 						
 						join = map.get(key);
@@ -379,7 +379,7 @@ public class SelectProvider extends SqlProvider{
 					table1=table2;
 					table1Alias=join.table2Alias;
 				}
-				queryFieldAliasMap.put(field.getName(), table1Alias);
+				innerJoinFieldAliasMap.put(field.getName(), table1Alias);
 			}else {
 				continue;
 			}
@@ -430,7 +430,7 @@ public class SelectProvider extends SqlProvider{
 				InnerJoin innerJoin=field.getAnnotation(InnerJoin.class);
 				if(innerJoin!=null||(innerJoins!=null&&innerJoins.innerJoins()!=null)||
 						(queryField!=null&&!StringUtil.isEmpty(queryField.foreignKeyFields()))) {
-					alias=queryFieldAliasMap.get(field.getName());
+					alias=innerJoinFieldAliasMap.get(field.getName());
 				}
 				//
 				if(queryField!=null&&queryField.whereSql()!=null&&(!StringUtil.isEmpty(queryField.whereSql()))) {//whereSql check first

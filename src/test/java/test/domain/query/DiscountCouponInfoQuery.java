@@ -36,6 +36,7 @@ public class DiscountCouponInfoQuery extends Query{
 			@InnerJoin(table2=Department.class,table1Field="departmentId")})
 	@QueryField(field="name")
 	public String updateUserDepartmentName;
+
 	
 	@InnerJoins(innerJoins={
 			@InnerJoin(table2=User.class,table1Field="updateUserId"),
@@ -48,4 +49,7 @@ public class DiscountCouponInfoQuery extends Query{
 
 	@QueryField(field="status",foreignKeyFields="updateUserId,departmentId")
 	public Integer updateUserDepartmentStatus2;
+	
+	@QueryField(field="name",foreignKeyFields="updateUserId,departmentId")
+	public String updateUserDepartmentName3;
 }

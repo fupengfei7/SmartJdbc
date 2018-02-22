@@ -180,6 +180,7 @@ public class DAOTestCase extends BaseTestCase{
 		query.updateUserDepartmentStatus=1;
 		query.updateUserDepartmentName2="总";
 		query.updateUserDepartmentStatus2=1;
+		query.updateUserDepartmentName3="办";
 		query.statusList=new int[] {1,2};
 		List<DiscountCouponInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
