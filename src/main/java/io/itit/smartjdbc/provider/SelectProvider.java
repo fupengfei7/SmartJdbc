@@ -320,7 +320,7 @@ public class SelectProvider extends SqlProvider{
 				Class<?> table1=domainClass;
 				String table1Alias=MAIN_TABLE_ALIAS;
 				for (InnerJoin j: innerJoinsList) {
-					String key=j.table1Field();
+					String key=j.table1Field()+"-"+j.table2().getName();
 					if(join==null) {
 						join = map.get(key);
 						if(join==null) {
@@ -360,7 +360,7 @@ public class SelectProvider extends SqlProvider{
 									domainClass.getSimpleName()+"."+foreignKeyField.getName());
 					}
 					Class<?> table2=foreignKey.domainClass();
-					String key=id;
+					String key=id+"-"+table2.getName();
 					if(join==null) {
 						join = map.get(key);
 						if(join==null) {
@@ -536,14 +536,13 @@ public class SelectProvider extends SqlProvider{
 			if (Modifier.isStatic(field.getModifiers())|| Modifier.isFinal(field.getModifiers())) {
 				continue;
 			}
-//			NonPersistent nonPersistent= field.getAnnotation(NonPersistent.class);
-//			if (nonPersistent!=null) {
-//				continue;
-//			}
 			if(excludeFields.contains(field.getName())){
 				continue;
 			}	
 			DomainField domainField = field.getAnnotation(DomainField.class);
+			if(domainField!=null&&domainField.ignoreWhenSelect()) {
+				continue;
+			}
 			if(domainField==null) {
 				select(MAIN_TABLE_ALIAS, field.getName());
 				continue;

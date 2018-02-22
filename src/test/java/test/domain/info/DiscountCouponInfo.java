@@ -24,4 +24,7 @@ public class DiscountCouponInfo extends DiscountCoupon{
 	@DomainField(foreignKeyFields="updateUserId,departmentId",field="name")
 	public String updateUserDepartmentName;
 	
+	@DomainField(ignoreWhenSelect=true)
+	public String test;
+	
 }

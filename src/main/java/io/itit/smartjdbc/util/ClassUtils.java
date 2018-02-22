@@ -1,5 +1,7 @@
 package io.itit.smartjdbc.util;
 
+import java.lang.reflect.Field;
+
 /**
  * 
  * @author skydu
@@ -33,5 +35,21 @@ public class ClassUtils {
 			}
 		}
 		return cl;
+	}
+	
+	/**
+	 * 
+	 * @param clazz
+	 * @param fieldName
+	 * @return
+	 */
+	public static boolean containField(Class<?> clazz,String fieldName) {
+		Field[] fields=clazz.getFields();
+		for (Field field : fields) {
+			if(field.getName().equals(fieldName)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

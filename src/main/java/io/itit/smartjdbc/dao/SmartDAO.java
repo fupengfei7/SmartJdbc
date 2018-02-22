@@ -212,10 +212,23 @@ public class SmartDAO extends BaseDAO{
 	/**
 	 * 
 	 * @param query
+	 */
+	protected void beforeQuery(Query query) {
+		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
+		if(interceptors!=null) {
+			for (DAOInterceptor interceptor : interceptors) {
+				interceptor.beforeQuery(query);
+			}
+		}
+	}
+	/**
+	 * 
+	 * @param query
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getDomain(Query query,String ... excludeFields){
+		beforeQuery(query);
 		Class<T> domainClass=(Class<T>) getDomainClass(query);
 		SqlBean sqlBean=new SelectProvider(domainClass).query(query).
 				excludeFields(excludeFields).build();
@@ -252,6 +265,7 @@ public class SmartDAO extends BaseDAO{
 	 * @return
 	 */
 	public <T> List<T> getList(Query query,String ... excludeFields){
+		beforeQuery(query);
 		Class<T> domainClass=getDomainClass(query);
 		SqlBean sqlBean=new SelectProvider(domainClass).query(query).
 				excludeFields(excludeFields).needPaging(true).build();
@@ -301,6 +315,7 @@ public class SmartDAO extends BaseDAO{
 	 * @return
 	 */
 	public int getListCount(Query query){
+		beforeQuery(query);
 		Class<?> domainClass=getDomainClass(query);
 		SqlBean sqlBean=new SelectProvider(domainClass).
 				selectCount().
