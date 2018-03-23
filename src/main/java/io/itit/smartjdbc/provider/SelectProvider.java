@@ -185,8 +185,23 @@ public class SelectProvider extends SqlProvider{
 		return this;
 	}
 	//
+	public SelectProvider inOrNotin(String alias,String operator,String key,Object[] values){
+		if(StringUtil.isEmpty(operator)||operator.trim().equalsIgnoreCase("in")) {
+			qw.in(alias, key, values);
+		}
+		else if(operator.trim().equalsIgnoreCase("not in")) {
+			qw.notin(alias, key, values);
+		}
+		return this;
+	}
+	//
 	public SelectProvider in(String alias,String key,Object[] values){
 		qw.in(alias, key, values);
+		return this;
+	}
+	//
+	public SelectProvider notin(String alias,String key,Object[] values){
+		qw.notin(alias, key, values);
 		return this;
 	}
 	//
@@ -243,6 +258,9 @@ public class SelectProvider extends SqlProvider{
 			try {
 				if (Modifier.isStatic(field.getModifiers()) || 
 						Modifier.isFinal(field.getModifiers())) {
+					continue;
+				}
+				if(field.getType().equals(int.class)&&field.getName().endsWith("Sort")) {//ingore Sort Field
 					continue;
 				}
 				Class<?> fieldType = field.getType();
@@ -446,23 +464,23 @@ public class SelectProvider extends SqlProvider{
 					if(queryField!=null&&(!StringUtil.isEmpty(queryField.operator()))) {
 						operator=queryField.operator();
 					}
-					if (StringUtil.isEmpty(operator)) {
+					if (fieldType.equals(int[].class)||
+							fieldType.equals(short[].class)||
+							fieldType.equals(byte[].class)||
+							fieldType.equals(String[].class)) {//in or not in
+						if(fieldType.equals(int[].class)) {
+							inOrNotin(alias,operator,dbFieldName, ArrayUtils.convert((int[])value));
+						}else if(fieldType.equals(short[].class)) {
+							inOrNotin(alias,operator,dbFieldName, ArrayUtils.convert((short[])value));
+						}else if(fieldType.equals(byte[].class)) {
+							inOrNotin(alias,operator, dbFieldName, ArrayUtils.convert((byte[])value));
+						}else if(fieldType.equals(String[].class)) {
+							inOrNotin(alias,operator, dbFieldName, ArrayUtils.convert((String[])value));
+						}
+						continue;
+					}else if (StringUtil.isEmpty(operator)) {
 						if(fieldType.equals(String.class)) {//字符串默认like
 							operator="like";
-						}else if (fieldType.equals(int[].class)||
-								fieldType.equals(short[].class)||
-								fieldType.equals(byte[].class)||
-								fieldType.equals(String[].class)) {
-							if(fieldType.equals(int[].class)) {
-								in(alias, dbFieldName, ArrayUtils.convert((int[])value));
-							}else if(fieldType.equals(short[].class)) {
-								in(alias, dbFieldName, ArrayUtils.convert((short[])value));
-							}else if(fieldType.equals(byte[].class)) {
-								in(alias, dbFieldName, ArrayUtils.convert((byte[])value));
-							}else if(fieldType.equals(String[].class)) {
-								in(alias, dbFieldName, ArrayUtils.convert((String[])value));
-							}
-							continue;
 						}else {
 							operator="=";
 						}
@@ -512,11 +530,44 @@ public class SelectProvider extends SqlProvider{
 		if(query==null) {
 			return;
 		}
-		OrderBys orderBys=query.getClass().getAnnotation(OrderBys.class);
-		if(orderBys!=null&&orderBys.orderBys()!=null) {
-			for (OrderBy orderBy : orderBys.orderBys()) {
-				if (query.orderType != null&& query.orderType == orderBy.orderType()) {
-					orderBy(orderBy.sql());
+		boolean haveSort=false;
+		Field[] fields = query.getClass().getFields();
+		for (Field field : fields) {
+			if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
+				continue;
+			}
+			if(!field.getType().equals(int.class)) {
+				continue;
+			}
+			String fieldName=field.getName();
+			if(!fieldName.endsWith("Sort")) {
+				continue;
+			}
+			try {
+				int value=field.getInt(query);
+				if(value==0) {
+					continue;
+				}
+				fieldName=convertFieldName(fieldName.substring(0,fieldName.length()-4));
+				String orderBy=" "+fieldName;
+				if(value==Query.SORT_TYPE_ASC) {
+					orderBy(orderBy+" asc ");
+				}else if(value==Query.SORT_TYPE_DESC) {
+					orderBy(orderBy+" desc ");
+				}
+				haveSort=true;
+			} catch (Exception e1) {
+				logger.error(e1.getMessage(),e1);
+			}
+		}
+		//
+		if(!haveSort) {
+			OrderBys orderBys=query.getClass().getAnnotation(OrderBys.class);
+			if(orderBys!=null&&orderBys.orderBys()!=null) {
+				for (OrderBy orderBy : orderBys.orderBys()) {
+					if (query.orderType != null&& query.orderType == orderBy.orderType()) {
+						orderBy(orderBy.sql());
+					}
 				}
 			}
 		}

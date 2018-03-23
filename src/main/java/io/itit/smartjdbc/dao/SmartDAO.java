@@ -213,7 +213,7 @@ public class SmartDAO extends BaseDAO{
 	 * 
 	 * @param query
 	 */
-	protected void beforeQuery(Query query) {
+	private void beforeQuery(Query query) {
 		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
