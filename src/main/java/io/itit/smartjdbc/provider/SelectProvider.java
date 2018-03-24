@@ -25,7 +25,6 @@ import io.itit.smartjdbc.annotations.ForeignKey;
 import io.itit.smartjdbc.annotations.InnerJoin;
 import io.itit.smartjdbc.annotations.InnerJoins;
 import io.itit.smartjdbc.annotations.LeftJoin;
-import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.annotations.OrderBys;
 import io.itit.smartjdbc.annotations.OrderBys.OrderBy;
 import io.itit.smartjdbc.annotations.QueryDefine;
@@ -592,10 +591,6 @@ public class SelectProvider extends SqlProvider{
 			if(excludeFields.contains(field.getName())){
 				continue;
 			}	
-			NonPersistent nonPersistent=field.getAnnotation(NonPersistent.class);
-			if(nonPersistent!=null) {
-				continue;
-			}
 			DomainField domainField = field.getAnnotation(DomainField.class);
 			if(domainField!=null&&domainField.ignoreWhenSelect()) {
 				continue;
