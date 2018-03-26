@@ -50,8 +50,18 @@ user.id=dao.add(user);
 
 ```java
 User user=dao.getById(User.class, 1);
+User user=dao.getDomain(User.class,QueryWhere.create().where("userName", "test"));
 ```
 
+## 3.3 列表查询
+
+```java
+UserQuery query=new UserQuery();
+query.userName="test";
+query.nameOrUserName="关";
+query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
+List<User> list=dao.getList(query);
+```
 
 # 4 其他
 
