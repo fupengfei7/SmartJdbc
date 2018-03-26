@@ -68,6 +68,22 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(DumpUtil.dump(user));
 	}
 	
+	public void testGetUsers() {
+		UserQuery query=new UserQuery();
+		query.userName="i";
+		query.nameOrUserName="关";
+		query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
+		List<User> list=dao.getList(query,"createTime","updateTime");
+		System.out.println(DumpUtil.dump(list));
+	}
+	
+	public void testGetUsersCounts() {
+		UserQuery query=new UserQuery();
+		query.userName="t";
+		int count=dao.getListCount(query);
+		System.out.println(count);
+	}
+	
 	public void testQueryUsers() {
 		List<User> users=dao.queryList(User.class, 
 				"select * from User where userName like concat('%'?,'%') and id=?", 
@@ -92,14 +108,6 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(count);
 	}
 	
-	public void testQueryUsersCount2() {
-		int count=dao.queryCount(
-				"select count(1) from User where userName like concat('%',#{userName},'%') and id=#{id}", 
-				new Param("userName", "liu"),
-				new Param("id", 1));
-		System.out.println(count);
-	}
-	
 	public void testGetUserIds() {
 		List<Integer> userIds=dao.queryForIntegers("select id from User where id=#{id}",
 				new Param("id", 1));
@@ -110,22 +118,14 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(DumpUtil.dump(userIds));
 	}
 	
-	public void testGetUsers() {
-		UserQuery query=new UserQuery();
-		query.userName="i";
-		query.nameOrUserName="关";
-		query.genders=new int[] {1,2};
-		query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
-		List<User> list=dao.getList(query,"createTime","updateTime");
-		System.out.println(DumpUtil.dump(list));
-	}
-	
-	public void testGetUsersCounts() {
-		UserQuery query=new UserQuery();
-		query.userName="t";
-		int count=dao.getListCount(query);
+	public void testQueryUsersCount2() {
+		int count=dao.queryCount(
+				"select count(1) from User where userName like concat('%',#{userName},'%') and id=#{id}", 
+				new Param("userName", "liu"),
+				new Param("id", 1));
 		System.out.println(count);
 	}
+	
 	
 	public void testUpdateUser() {
 		User user=dao.getById(User.class, 1);
