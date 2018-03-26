@@ -13,7 +13,7 @@ import io.itit.smartjdbc.provider.SelectProvider;
 import io.itit.smartjdbc.util.DumpUtil;
 import test.dao.BizDAO;
 import test.domain.Bug;
-import test.domain.DiscountCoupon;
+import test.domain.Article;
 import test.domain.User;
 import test.domain.info.DiscountCouponDetailInfo;
 import test.domain.info.DiscountCouponInfo;
@@ -144,13 +144,16 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(count);
 	}
 	//
-	public void testAddDiscountCoupon() throws IOException{
-		DiscountCoupon bean=new DiscountCoupon();
-		bean.name="满100减10元";
+	public void testArticle() throws IOException{
+		Article bean=new Article();
+		bean.title="桑切斯遭孤立?队友吃饭他加练 为融入曼联拼了";
+		bean.content="上周，有关桑切斯的负面消息很多，英媒体爆料他在曼联阵中独来独往、总是一个人吃饭，"
+				+ "无法融入到集体中，还有媒体称桑切斯甚至在比赛中遭到了队友的当面批评，"
+				+ "这些让外界对桑切斯在曼联的未来表示了担忧。不过，英媒体《每日镜报》"
+				+ "今日透露桑切斯在曼联并没有被孤立，智利人也没有刻意躲避队友，"
+				+ "他之所以经常一个人吃饭竟是这样的原因。";
 		bean.createUserId=1;
-		bean.conditionalMoney=100;
-		bean.money=10;
-		bean.num=100;
+		bean.updateUserId=1;
 		int id=dao.add(bean);
 		System.out.println(id);
 	}

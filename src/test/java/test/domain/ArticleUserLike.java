@@ -3,13 +3,13 @@ package test.domain;
 import io.itit.smartjdbc.annotations.ForeignKey;
 
 /**
- * 优惠券
+ * 用户喜爱文章
  * @author skydu
  *
  */
-public class DiscountCouponUserLike extends BaseDomain{
+public class ArticleUserLike extends BaseDomain{
 	//
-	@ForeignKey(domainClass=DiscountCoupon.class)
+	@ForeignKey(domainClass=Article.class)
 	public int discountCouponId;
 	
 	@ForeignKey(domainClass=User.class)

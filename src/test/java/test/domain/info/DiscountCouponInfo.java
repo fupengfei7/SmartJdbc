@@ -2,15 +2,15 @@ package test.domain.info;
 
 import io.itit.smartjdbc.annotations.DomainDefine;
 import io.itit.smartjdbc.annotations.DomainField;
-import test.domain.DiscountCoupon;
+import test.domain.Article;
 
 /**
  * 
  * @author skydu
  *
  */
-@DomainDefine(domainClass=DiscountCoupon.class)
-public class DiscountCouponInfo extends DiscountCoupon{
+@DomainDefine(domainClass=Article.class)
+public class DiscountCouponInfo extends Article{
 
 	@DomainField(foreignKeyFields="createUserId",field="name")
 	public String createUserName;
