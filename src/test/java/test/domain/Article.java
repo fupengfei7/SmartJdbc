@@ -9,8 +9,9 @@ import io.itit.smartjdbc.annotations.ForeignKey;
  */
 public class Article extends BaseDomain{
 	//
-	public static final int STATUS_未发布=1;
-	public static final int STATUS_已发布=2;
+	public static final int STATUS_待审核=1;
+	public static final int STATUS_审核通过=2;
+	public static final int STATUS_审核未通过=3;
 	//
 	/**标题*/
 	public String title;

@@ -12,15 +12,14 @@ import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.provider.SelectProvider;
 import io.itit.smartjdbc.util.DumpUtil;
 import test.dao.BizDAO;
-import test.domain.Bug;
 import test.domain.Article;
+import test.domain.Bug;
 import test.domain.User;
-import test.domain.info.DiscountCouponDetailInfo;
-import test.domain.info.DiscountCouponInfo;
+import test.domain.info.ArticleInfo;
 import test.domain.info.UserInfo;
 import test.domain.info.UserStat;
 import test.domain.query.BugInfoQuery;
-import test.domain.query.DiscountCouponInfoQuery;
+import test.domain.query.ArticleInfoQuery;
 import test.domain.query.UserInfoQuery;
 import test.domain.query.UserQuery;
 import test.domain.query.UserStatQuery;
@@ -57,8 +56,8 @@ public class DAOTestCase extends BaseTestCase{
 	//
 	public void testAddUser() {
 		User user=new User();
-		user.name="test";
-		user.userName="test";
+		user.name="关羽";
+		user.userName="guanyu";
 		user.password="111111";
 		user.id=dao.add(user);
 		System.out.println(user.id);
@@ -154,12 +153,10 @@ public class DAOTestCase extends BaseTestCase{
 				+ "他之所以经常一个人吃饭竟是这样的原因。";
 		bean.createUserId=1;
 		bean.updateUserId=1;
+		bean.status=Article.STATUS_待审核;
 		int id=dao.add(bean);
 		System.out.println(id);
 	}
-	//
-	//
-	//
 	//
 	public void testGetUserInfoById() {
 		dao.getById(UserInfo.class,1);
@@ -179,33 +176,28 @@ public class DAOTestCase extends BaseTestCase{
 		dao.getListCount(query);
 	}
 	//
-	public void testGetDiscountCouponInfo() {
-		dao.getById(DiscountCouponInfo.class,1);
+	public void testGetArticleInfo() {
+		dao.getById(ArticleInfo.class,1);
 	}
 	//
-	public void testGetDiscountCouponInfos() {
-		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
+	public void testGetArticleInfos() {
+		ArticleInfoQuery query=new ArticleInfoQuery();
 		query.createUserName="刘备";
-		query.updateUserDepartmentName="总办";
-		query.updateUserDepartmentStatus=1;
-		query.updateUserDepartmentName2="总";
-		query.updateUserDepartmentStatus2=1;
-		query.updateUserDepartmentName3="办";
 		query.statusList=new int[] {1,2};
-		List<DiscountCouponInfo> users=dao.getList(query);
+		List<ArticleInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
 	}
 	//
-	public void testGetDiscountCouponInfosCount() {
-		DiscountCouponInfoQuery query=new DiscountCouponInfoQuery();
+	public void testGetArticleInfosCount() {
+		ArticleInfoQuery query=new ArticleInfoQuery();
 		query.createUserName="刘备";
-		query.statusList=new int[] {1,2};
+		query.statusList=new int[] {ArticleInfo.STATUS_审核通过,ArticleInfo.STATUS_审核未通过};
 		System.out.println(DumpUtil.dump(dao.getListCount(query)));
 	}
 	//
-	//
-	public void testGetDiscountCouponDetailInfo() {
-		dao.getById(DiscountCouponDetailInfo.class,1);
+	public void testArticleInfo() {
+		ArticleInfo info=dao.getById(ArticleInfo.class,1);
+		System.out.println(DumpUtil.dump(info));
 	}
 	//
 	public void getUserStats() {
