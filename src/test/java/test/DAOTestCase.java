@@ -68,6 +68,11 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(DumpUtil.dump(user));
 	}
 	
+	public void testGetByUserName() {
+		User user=dao.getDomain(User.class,QueryWhere.create().where("userName", "test"));
+		System.out.println(DumpUtil.dump(user));
+	}
+	
 	public void testGetUsers() {
 		UserQuery query=new UserQuery();
 		query.userName="i";

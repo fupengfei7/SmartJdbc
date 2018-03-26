@@ -36,14 +36,28 @@ compile 'com.github.icecooly:SmartJdbc-Spring:1.0.0'
 
 # 3 例子
 
-## 3.1 简单insert
+## 3.1 简单增删改
 
+增加
 ```java
 User user=new User();
 user.name="关羽";
 user.userName="guanyu";
 user.password="111111";
 user.id=dao.add(user);
+```
+修改
+```java
+User user=new User();
+user.id=1;
+user.name="关羽2";
+user.userName="guanyu2";
+user.password="222222";
+user.id=dao.update(user);
+```
+删除
+```java
+dao.deleteById(User.class, 1);
 ```
 
 ## 3.2 基本查询
