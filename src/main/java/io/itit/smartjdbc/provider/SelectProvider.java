@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.QueryWhere.Where;
@@ -569,6 +570,9 @@ public class SelectProvider extends SqlProvider{
 						orderBy(orderBy.sql());
 					}
 				}
+			}
+			if(Config.getDefaultOrderBy()!=null) {
+				Config.getDefaultOrderBy().accept(this,query);
 			}
 		}
 	}
