@@ -54,6 +54,7 @@ public class DAOTestCase extends BaseTestCase{
 	    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
 	}
 	//
+	/**新增用户*/
 	public void testAddUser() {
 		User user=new User();
 		user.name="关羽";
@@ -63,16 +64,19 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(user.id);
 	}
 	
+	/**通过id查询用户*/
 	public void testGetById() {
 		User user=dao.getById(User.class, 1);
 		System.out.println(DumpUtil.dump(user));
 	}
 	
+	/**通过用户名查询用户*/
 	public void testGetByUserName() {
 		User user=dao.getDomain(User.class,QueryWhere.create().where("userName", "test"));
 		System.out.println(DumpUtil.dump(user));
 	}
 	
+	/**查询用户列表*/
 	public void testGetUsers() {
 		UserQuery query=new UserQuery();
 		query.userName="i";
@@ -82,6 +86,7 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(DumpUtil.dump(list));
 	}
 	
+	/**查询用户列表总数*/
 	public void testGetUsersCounts() {
 		UserQuery query=new UserQuery();
 		query.userName="t";
@@ -143,12 +148,14 @@ public class DAOTestCase extends BaseTestCase{
 		dao.executeUpdate("update User set name='关羽2' where id=#{id}",new Param("id", 1));
 	}
 	
+	/**删除用户*/
 	public void testDeleteUser() {
 		int count=dao.delete(User.class, QueryWhere.create().where("id", 3));
 		System.out.println(count);
 	}
 	//
-	public void testArticle() throws IOException{
+	/**添加文章*/
+	public void testAddArticle() throws IOException{
 		Article bean=new Article();
 		bean.title="桑切斯遭孤立?队友吃饭他加练 为融入曼联拼了";
 		bean.content="上周，有关桑切斯的负面消息很多，英媒体爆料他在曼联阵中独来独往、总是一个人吃饭，"
@@ -167,6 +174,7 @@ public class DAOTestCase extends BaseTestCase{
 		dao.getById(UserInfo.class,1);
 	}
 	//
+	/**查询用户Info列表*/
 	public void testGetUserInfos() {
 		UserInfoQuery query=new UserInfoQuery();
 		query.roleName="总经理";

@@ -70,12 +70,43 @@ User user=dao.getDomain(User.class,QueryWhere.create().where("userName", "test")
 ## 3.3 列表查询
 
 ```java
+//查询用户名包含test的用户列表
 UserQuery query=new UserQuery();
 query.userName="test";
-query.nameOrUserName="关";
 query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
 List<User> list=dao.getList(query);
 ```
+
+## 3.4 复杂查询
+
+```java
+//查询用户名包含test的用户列表
+@DomainDefine(domainClass=User.class)
+public class User extends BaseDomain{
+	public String name;
+	public String userName;
+	public String password;
+	public boolean gender;
+	public Date lastLoginTime;
+	@ForeignKey(domainClass=Department.class)
+	public int departmentId;
+	@ForeignKey(domainClass=Role.class)
+	public int roleId;
+	public String description;
+}
+public class UserInfo extends User{
+	@DomainField(foreignKeyFields="departmentId",field="name")
+	public String departmentName;
+	
+	@DomainField(foreignKeyFields="roleId",field="name")
+	public String roleName;
+}
+//查询角色名称是总监是用户列表
+UserInfoQuery query=new UserInfoQuery();
+query.roleName="总监";
+List<UserInfo> users=dao.getList(query);
+```
+更多可参考test/DAOTestCase.java
 
 # 4 其他
 
