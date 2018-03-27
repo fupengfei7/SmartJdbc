@@ -48,8 +48,7 @@ user.id=dao.add(user);
 ```
 修改
 ```java
-User user=new User();
-user.id=1;
+User user=dao.getById(User.class, 1);
 user.name="刘备2";
 user.userName="liubei2";
 user.password="222222";
