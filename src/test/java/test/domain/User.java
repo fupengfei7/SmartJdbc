@@ -6,7 +6,7 @@ import io.itit.smartjdbc.annotations.DomainDefine;
 import io.itit.smartjdbc.annotations.ForeignKey;
 
 /**
- * 
+ * 用户
  * @author skydu
  *
  */

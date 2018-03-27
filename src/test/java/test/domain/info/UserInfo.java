@@ -4,7 +4,7 @@ import io.itit.smartjdbc.annotations.DomainField;
 import test.domain.User;
 
 /**
- * 
+ * 用户详情
  * @author skydu
  *
  */

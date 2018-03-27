@@ -10,7 +10,7 @@ import io.itit.smartjdbc.annotations.ForeignKey;
 public class ArticleUserLike extends BaseDomain{
 	//
 	@ForeignKey(domainClass=Article.class)
-	public int discountCouponId;
+	public int articleId;
 	
 	@ForeignKey(domainClass=User.class)
 	public int userId;

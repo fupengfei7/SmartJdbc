@@ -77,7 +77,7 @@ query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
 List<User> list=dao.getList(query);
 ```
 
-## 3.4 复杂查询
+## 3.4 复杂查询(不用冗余数据，自动join)
 
 ```java
 //查询用户名包含test的用户列表

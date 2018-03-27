@@ -201,9 +201,23 @@ public class DAOTestCase extends BaseTestCase{
 		query.statusList=new int[] {ArticleInfo.STATUS_审核通过,ArticleInfo.STATUS_审核未通过};
 		System.out.println(DumpUtil.dump(dao.getListCount(query)));
 	}
-	//
+	/**
+	 * 查询文章详情
+	 */
 	public void testArticleInfo() {
 		ArticleInfo info=dao.getById(ArticleInfo.class,1);
 		System.out.println(DumpUtil.dump(info));
 	}
+	
+	/**
+	 * 查询userId为1的用户喜爱的文章列表
+	 */
+	public void testGetUserLikeArticles() {
+		ArticleInfoQuery query=new ArticleInfoQuery();
+		query.likeUserId=1;
+		query.pageSize=20;
+		List<ArticleInfo> list=dao.getList(query);
+		System.out.println(DumpUtil.dump(list));
+	}
+	
 }
