@@ -104,6 +104,7 @@ public class UserInfo extends User{
 //查询角色名称是总监是用户列表
 UserInfoQuery query=new UserInfoQuery();
 query.roleName="总监";
+query.pageSize=20;
 List<UserInfo> users=dao.getList(query);
 //会自动生成如下sql
 select * from User a  inner join Role i1 on a.roleId=i1.id  where i1.name like  '%总监%'  limit 0,20;
