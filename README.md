@@ -41,8 +41,8 @@ compile 'com.github.icecooly:SmartJdbc-Spring:1.0.0'
 增加
 ```java
 User user=new User();
-user.name="关羽";
-user.userName="guanyu";
+user.name="刘备";
+user.userName="liubei";
 user.password="111111";
 user.id=dao.add(user);
 ```
@@ -50,8 +50,8 @@ user.id=dao.add(user);
 ```java
 User user=new User();
 user.id=1;
-user.name="关羽2";
-user.userName="guanyu2";
+user.name="刘备2";
+user.userName="liubei2";
 user.password="222222";
 user.id=dao.update(user);
 ```
