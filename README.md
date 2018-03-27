@@ -1,4 +1,4 @@
-# 轻量级数据库访问框架SmartJdbc
+# 轻量级ORM框架SmartJdbc
 
 # 1 简介
 
