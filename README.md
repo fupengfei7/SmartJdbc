@@ -79,7 +79,7 @@ List<User> list=dao.getList(query);
 ## 3.4 复杂查询(不用冗余数据，自动join)
 
 ```java
-//查询用户名包含test的用户列表
+//查询角色名称是总监是用户列表
 @DomainDefine(domainClass=User.class)
 public class User extends BaseDomain{
 	public String name;
@@ -100,7 +100,6 @@ public class UserInfo extends User{
 	@DomainField(foreignKeyFields="roleId",field="name")
 	public String roleName;
 }
-//查询角色名称是总监是用户列表
 UserInfoQuery query=new UserInfoQuery();
 query.roleName="总监";
 query.pageSize=20;
