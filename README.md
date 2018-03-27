@@ -69,7 +69,7 @@ User user=dao.getDomain(User.class,QueryWhere.create().where("userName", "test")
 ## 3.3 列表查询
 
 ```java
-//查询用户名包含test的用户列表
+//查询用户名包含test的用户列表,按照创建时间降序
 UserQuery query=new UserQuery();
 query.userName="test";
 query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
