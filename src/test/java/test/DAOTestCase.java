@@ -8,21 +8,15 @@ import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.DAOInterceptor;
 import io.itit.smartjdbc.Param;
 import io.itit.smartjdbc.QueryWhere;
-import io.itit.smartjdbc.SqlBean;
-import io.itit.smartjdbc.provider.SelectProvider;
 import io.itit.smartjdbc.util.DumpUtil;
 import test.dao.BizDAO;
 import test.domain.Article;
-import test.domain.Bug;
 import test.domain.User;
 import test.domain.info.ArticleInfo;
 import test.domain.info.UserInfo;
-import test.domain.info.UserStat;
-import test.domain.query.BugInfoQuery;
 import test.domain.query.ArticleInfoQuery;
 import test.domain.query.UserInfoQuery;
 import test.domain.query.UserQuery;
-import test.domain.query.UserStatQuery;
 
 /**
  * 
@@ -211,21 +205,5 @@ public class DAOTestCase extends BaseTestCase{
 	public void testArticleInfo() {
 		ArticleInfo info=dao.getById(ArticleInfo.class,1);
 		System.out.println(DumpUtil.dump(info));
-	}
-	//
-	public void getUserStats() {
-		UserStatQuery query=new UserStatQuery();
-		List<UserStat> list=dao.getList(query);
-		System.out.println(DumpUtil.dump(list));
-	}
-	//
-	public void testGetBugs() {
-		BugInfoQuery query=new BugInfoQuery();
-		query.inStatusList=new int[] {1,2};
-		query.notInstatus=new int[] {3,4};
-		SelectProvider selectProvider=new SelectProvider(Bug.class);
-		selectProvider.query(query);
-		SqlBean sqlBean=selectProvider.build();
-		System.out.println(DumpUtil.dump(sqlBean));
 	}
 }
