@@ -73,9 +73,7 @@ public class DAOTestCase extends BaseTestCase{
 	/**查询用户列表*/
 	public void testGetUsers() {
 		UserQuery query=new UserQuery();
-		query.userName="i";
-		query.nameOrUserName="关";
-		query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
+		query.userName="test";
 		List<User> list=dao.getList(query,"createTime","updateTime");
 		System.out.println(DumpUtil.dump(list));
 	}
@@ -83,7 +81,7 @@ public class DAOTestCase extends BaseTestCase{
 	/**查询用户列表总数*/
 	public void testGetUsersCounts() {
 		UserQuery query=new UserQuery();
-		query.userName="t";
+		query.userName="test";
 		int count=dao.getListCount(query);
 		System.out.println(count);
 	}
@@ -168,10 +166,10 @@ public class DAOTestCase extends BaseTestCase{
 		dao.getById(UserInfo.class,1);
 	}
 	//
-	/**查询用户Info列表*/
+	/**查询角色名称是总监是用户列表*/
 	public void testGetUserInfos() {
 		UserInfoQuery query=new UserInfoQuery();
-		query.roleName="总经理";
+		query.roleName="总监";
 		List<UserInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
 	}

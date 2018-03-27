@@ -105,6 +105,8 @@ public class UserInfo extends User{
 UserInfoQuery query=new UserInfoQuery();
 query.roleName="总监";
 List<UserInfo> users=dao.getList(query);
+//会自动生成如下sql
+select * from User a  inner join Role i1 on a.`roleId`=i1.id  where i1.`name` like  '%总监%'  limit 0,20;
 ```
 更多可参考test/DAOTestCase.java
 

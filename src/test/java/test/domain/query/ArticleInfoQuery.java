@@ -20,10 +20,12 @@ public class ArticleInfoQuery extends Query{
 	
 	public Integer status;
 	
+	@QueryField(whereSql="and (title like concat('%',#{titleOrContent},'%') or content like concat('%',#{titleOrContent},'%'))")
+	public String titleOrContent;
+	
 	@InnerJoin(table2=User.class,table1Field="createUserId")
 	@QueryField(field="name")
 	public String createUserName;
-
 
 	@InnerJoin(table2=User.class,table1Field="updateUserId")
 	@QueryField(field="name")
