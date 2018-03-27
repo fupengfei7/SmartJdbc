@@ -86,6 +86,7 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(count);
 	}
 	
+	/**当然写sql也是支持的*/
 	public void testQueryUsers() {
 		List<User> users=dao.queryList(User.class, 
 				"select * from User where userName like concat('%'?,'%') and id=?", 
