@@ -26,6 +26,7 @@ public class QueryWhere {
 	protected String orderBy;
 	protected int limitStart=0;
 	protected int limitEnd=-1;
+	protected boolean forUpdate;
 	//
 	private QueryWhere() {
 		wheres=new LinkedList<Where>();
@@ -95,6 +96,11 @@ public class QueryWhere {
 		return this;
 	}
 	//
+	public QueryWhere forUpdate() {
+		forUpdate=true;
+		return this;
+	}
+	//
 	public Object[] whereValues(){
 		List<Object>ret=new LinkedList<Object>();
 		for(Where w:wheres){
@@ -158,6 +164,9 @@ public class QueryWhere {
 			}
 		}
 		sql.append(" ");
+		if(forUpdate) {
+			sql.append("for update ");
+		}
 		return sql.toString();
 	}
 	//
