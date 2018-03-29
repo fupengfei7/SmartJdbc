@@ -232,4 +232,11 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println("sum:"+sum);
 	}
 	
+	public void testSumByQuery() {
+		UserQuery query=new UserQuery();
+		query.userName="liu";
+		Long sum=dao.sum(query,Long.class, "roleId");
+		System.out.println("sum:"+sum);
+	}
+	
 }

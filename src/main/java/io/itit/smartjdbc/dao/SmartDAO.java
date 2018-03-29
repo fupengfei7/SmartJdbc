@@ -614,6 +614,31 @@ public class SmartDAO extends BaseDAO{
 		}
 		return SelectProvider.parseSql(sql, paraMap);//#
 	}
+	
+	@SuppressWarnings("unchecked")
+	public <S extends Number>S sum(Query query,Class<S> clazz,String field){
+		Class<?> domainClass=getDomainClass(query);
+		SqlBean sqlBean=new SelectProvider(domainClass).query(query).sum(field).
+				ingoreSelectDomainFiled().needOrderBy(false).build();
+		String sql=sqlBean.sql;
+		Object[] parameters=sqlBean.parameters;
+		if(clazz==long.class||clazz==Long.class){
+			return (S) queryForLong(sql,parameters);
+		}
+		if(clazz==int.class||clazz==Integer.class){
+			return (S) queryForInteger(sql,parameters);
+		}
+		if(clazz==short.class||clazz==Short.class){
+			return (S) queryForShort(sql,parameters);
+		}
+		if(clazz==Double.class||clazz==Double.class){
+			return (S) queryForDouble(sql,parameters);
+		}
+		if(clazz==Float.class||clazz==Float.class){
+			return (S) queryForFloat(sql,parameters);
+		}
+		throw new IllegalArgumentException(clazz.getSimpleName()+" not supported");
+	}
 	/**
 	 * 
 	 * @param domainClass
@@ -624,7 +649,8 @@ public class SmartDAO extends BaseDAO{
 	 */
 	@SuppressWarnings("unchecked")
 	public <S extends Number>S sum(Class<?> domainClass,Class<S> clazz,String field,QueryWhere qt){
-		SqlBean sqlBean=new SelectProvider(domainClass).query(qt).sum(field).needOrderBy(false).build();
+		SqlBean sqlBean=new SelectProvider(domainClass).query(qt).sum(field).
+				ingoreSelectDomainFiled().needOrderBy(false).build();
 		String sql=sqlBean.sql;
 		Object[] parameters=sqlBean.parameters;
 		if(clazz==long.class||clazz==Long.class){
