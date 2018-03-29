@@ -14,9 +14,11 @@ import test.domain.Article;
 import test.domain.User;
 import test.domain.info.ArticleInfo;
 import test.domain.info.UserInfo;
+import test.domain.info.UserStat;
 import test.domain.query.ArticleInfoQuery;
 import test.domain.query.UserInfoQuery;
 import test.domain.query.UserQuery;
+import test.domain.query.UserStatQuery;
 
 /**
  * 
@@ -217,6 +219,17 @@ public class DAOTestCase extends BaseTestCase{
 		query.pageSize=20;
 		List<ArticleInfo> list=dao.getList(query);
 		System.out.println(DumpUtil.dump(list));
+	}
+	//
+	public void getUserStats() {
+		UserStatQuery query=new UserStatQuery();
+		List<UserStat> list=dao.getList(query);
+		System.out.println(DumpUtil.dump(list));
+	}
+	
+	public void testSum() {
+		Long sum=dao.sum(User.class,Long.class, "roleId", QueryWhere.create());
+		System.out.println("sum:"+sum);
 	}
 	
 }

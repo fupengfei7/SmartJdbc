@@ -624,7 +624,7 @@ public class SmartDAO extends BaseDAO{
 	 */
 	@SuppressWarnings("unchecked")
 	public <S extends Number>S sum(Class<?> domainClass,Class<S> clazz,String field,QueryWhere qt){
-		SqlBean sqlBean=new SelectProvider(domainClass).sum(field).needOrderBy(false).build();
+		SqlBean sqlBean=new SelectProvider(domainClass).query(qt).sum(field).needOrderBy(false).build();
 		String sql=sqlBean.sql;
 		Object[] parameters=sqlBean.parameters;
 		if(clazz==long.class||clazz==Long.class){
