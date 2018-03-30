@@ -137,17 +137,6 @@ public class SmartJdbcConfig implements TransactionManagementConfigurer {
 		Config.addSqlInterceptor(sessionFactory);
 	}
 	
-	private static void setFieldValue(Object bean,String fieldName,Object value){
-		try {
-			Field field=bean.getClass().getField(fieldName);
-			if(field!=null) {
-				field.set(bean, value);
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage(),e);
-		}
-	}
-	
 	protected  String convertFieldName(String name) {
 		StringBuffer result = new StringBuffer();
 		for (char c : name.toCharArray()) {
