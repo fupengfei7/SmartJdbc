@@ -14,6 +14,7 @@ import test.domain.Article;
 import test.domain.User;
 import test.domain.info.ArticleInfo;
 import test.domain.info.UserInfo;
+import test.domain.info.UserSimpleInfo;
 import test.domain.info.UserStat;
 import test.domain.query.ArticleInfoQuery;
 import test.domain.query.UserInfoQuery;
@@ -239,4 +240,8 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println("sum:"+sum);
 	}
 	
+	public void testGetUserSimpleInfo() {
+		List<UserSimpleInfo> list=dao.getList(UserSimpleInfo.class,QueryWhere.create());
+		System.out.println(DumpUtil.dump(list));
+	}
 }
