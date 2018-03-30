@@ -114,8 +114,60 @@ List<UserInfo> users=dao.getList(query);
 ```
 更多可参考test/DAOTestCase.java
 
-# 4 其他
+# 4 Spring Boot中使用SmartJdbc
+SmartJdbcConfig.java
+```java
+@Configuration
+@EnableTransactionManagement
+@AutoConfigureAfter({DataSourceConfig.class})
+public class SmartJdbcConfig implements TransactionManagementConfigurer {
+	//
+	private static final Logger logger = LoggerFactory.getLogger(SmartJdbcConfig.class);
+	//
+	@Autowired
+	private DataSource dataSource;
+	//
+	@PostConstruct
+	public void init() {
+		SqlSessionFactory sessionFactory=new SqlSessionFactory();
+		sessionFactory.setDataSource(dataSource);
+		ConnectionManager.setTransactionManager(sessionFactory);
+		Config.setTableNameFunc(clazz->{return "t"+convertFieldName(clazz.getSimpleName());});//表结构映射User->t_user
+		Config.setConvertFieldNameFunc(this::convertFieldName);//字段映射userName->user_name
+		Config.addSqlInterceptor(sessionFactory);
+	}
+	
+	private static void setFieldValue(Object bean,String fieldName,Object value){
+		try {
+			Field field=bean.getClass().getField(fieldName);
+			if(field!=null) {
+				field.set(bean, value);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(),e);
+		}
+	}
+	
+	protected  String convertFieldName(String name) {
+		StringBuffer result = new StringBuffer();
+		for (char c : name.toCharArray()) {
+			if (Character.isUpperCase(c)) {
+				result.append("_");
+			}
+			result.append(Character.toLowerCase(c));
+		}
+		return result.toString();
+	}
+	
+	@Bean(name="annotationDrivenTransactionManager")
+	public PlatformTransactionManager annotationDrivenTransactionManager() {
+		return new DataSourceTransactionManager(dataSource);
+	}
+}
+```
+
+# 5 其他
 
 * [项目主页](https://github.com/icecooly/SmartJdbc)
 
-# 5 更新日志
+# 6 更新日志
