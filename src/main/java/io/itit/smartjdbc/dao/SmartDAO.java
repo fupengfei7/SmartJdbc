@@ -434,6 +434,10 @@ public class SmartDAO extends BaseDAO{
 					Modifier.isFinal(f.getModifiers())) {
 				continue;
 			}
+			DomainField domainField=f.getAnnotation(DomainField.class);
+			if(domainField!=null&&domainField.ignoreWhenSelect()) {
+				continue;
+			}
 			if(!columnNames.contains(fieldName)) {
 				if(WRAP_TYPES.contains(fieldType)){
 					continue;
@@ -472,7 +476,6 @@ public class SmartDAO extends BaseDAO{
 					value = bos.toByteArray();
 				}
 			} else {
-				DomainField domainField=f.getAnnotation(DomainField.class);
 				if(domainField==null||StringUtil.isEmpty(domainField.foreignKeyFields())) {
 					String strValue=rs.getString(fieldName);
 					if(strValue!=null){
