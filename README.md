@@ -76,7 +76,7 @@ query.orderType=UserQuery.ORDER_BY_CREATE_TIME_DESC;
 List<User> list=dao.getList(query);
 ```
 
-## 3.4 复杂查询(不用冗余数据，自动join)
+## 3.4 复杂查询(如果数据库设计是三范式，不冗余存储数据，查询时可以自动join，不用手工写sql)
 
 ```java
 //查询角色名称是总监是用户列表
