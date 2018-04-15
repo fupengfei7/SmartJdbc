@@ -11,13 +11,23 @@ import test.domain.info.UserInfo;
  *
  */
 
-@QueryDefine(domainClass=UserInfo.class)
-public class UserInfoQuery extends Query{
+@QueryDefine(domainClass = UserInfo.class)
+public class UserInfoQuery extends Query {
 	//
 	public String userName;
-	
+
 	public Integer gender;
-	
-	@QueryField(foreignKeyFields="roleId",field="name")
+
+	@QueryField(foreignKeyFields = "roleId", field = "name")
 	public String roleName;
+	//
+	// sort fields
+	public int nameSort;
+	public int userNameSort;
+	public int passwordSort;
+	public int genderSort;
+	public int lastLoginTimeSort;
+	public int departmentIdSort;
+	public int roleIdSort;
+	public int descriptionSort;
 }

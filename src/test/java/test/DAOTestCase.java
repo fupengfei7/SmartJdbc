@@ -7,6 +7,7 @@ import java.util.List;
 import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.DAOInterceptor;
 import io.itit.smartjdbc.Param;
+import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.util.DumpUtil;
 import test.dao.BizDAO;
@@ -183,6 +184,16 @@ public class DAOTestCase extends BaseTestCase{
 		query.gender=1;
 		query.roleName="总经理";
 		dao.getListCount(query);
+	}
+	//
+	public void testGetUserInfosOrderBySortFields() {
+		UserInfoQuery query=new UserInfoQuery();
+		// order by name asc,roleId desc
+		query.gender=Query.SORT_TYPE_ASC;
+		query.nameSort=Query.SORT_TYPE_ASC;
+		query.roleIdSort=Query.SORT_TYPE_DESC;
+		List<UserInfo> users=dao.getList(query);
+		System.out.println(DumpUtil.dump(users));
 	}
 	//
 	public void testGetArticleInfo() {
