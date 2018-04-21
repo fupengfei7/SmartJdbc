@@ -136,7 +136,7 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testUpdateUser() {
 		User user=dao.getById(User.class, 1);
-		user.description="测试描述";
+		user.gender=User.GENDER_男;
 		dao.update(user);
 	}
 	
