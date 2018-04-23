@@ -1,5 +1,6 @@
 package test.domain;
 
+import io.itit.smartjdbc.annotations.DomainDefine;
 import io.itit.smartjdbc.annotations.ForeignKey;
 
 /**
@@ -7,6 +8,7 @@ import io.itit.smartjdbc.annotations.ForeignKey;
  * @author skydu
  *
  */
+@DomainDefine(domainClass=ArticleUserLike.class)
 public class ArticleUserLike extends BaseDomain{
 	//
 	@ForeignKey(domainClass=Article.class)

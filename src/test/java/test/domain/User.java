@@ -2,6 +2,7 @@ package test.domain;
 
 import java.util.Date;
 
+import io.itit.smartjdbc.annotations.DomainDefine;
 import io.itit.smartjdbc.annotations.ForeignKey;
 import test.domain.Role;
 /**
@@ -9,6 +10,7 @@ import test.domain.Role;
  * @author skydu
  *
  */
+@DomainDefine(domainClass=User.class)
 public class User extends BaseDomain{
 	
 	public static final int STATUS_在职=1;
