@@ -1,6 +1,7 @@
 package io.itit.smartjdbc.provider;
 
 import io.itit.smartjdbc.QueryWhere;
+import io.itit.smartjdbc.QueryWhere.WhereStatment;
 import io.itit.smartjdbc.SqlBean;
 
 /**
@@ -24,8 +25,9 @@ public class DeleteProvider extends SqlProvider{
 		String tableName=getTableName(domainClass);
 		sql.append("delete from ").append(tableName).append(" ");
 		sql.append("where 1=1 ");
-		sql.append(qw.whereStatement());
-		return createSqlBean(sql.toString(),qw.whereValues());
+		WhereStatment ws=qw.whereStatement();
+		sql.append(ws.sql);
+		return createSqlBean(sql.toString(),ws.values);
 	}
 
 }

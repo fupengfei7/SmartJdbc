@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
+import io.itit.smartjdbc.QueryWhere.WhereStatment;
 import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.util.JSONUtil;
 
@@ -86,8 +87,9 @@ public class UpdateProvider extends SqlProvider{
 				qw.where(convertFieldName(field.getName()),getFieldValue(bean, field.getName()));
 			}
 		}
-		sql.append(qw.whereStatement());
-		for(Object o:qw.whereValues()){
+		WhereStatment ws=qw.whereStatement();
+		sql.append(ws.sql);
+		for(Object o:ws.values){
 			fieldList.add(o);
 		}
 		return createSqlBean(sql.toString(), fieldList.toArray(new Object[fieldList.size()]));

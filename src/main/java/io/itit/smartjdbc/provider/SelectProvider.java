@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.Query;
+import io.itit.smartjdbc.QueryFieldInfo;
+import io.itit.smartjdbc.QueryInfo;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.QueryWhere.Where;
 import io.itit.smartjdbc.SmartJdbcException;
@@ -30,6 +32,7 @@ import io.itit.smartjdbc.annotations.OrderBys;
 import io.itit.smartjdbc.annotations.OrderBys.OrderBy;
 import io.itit.smartjdbc.annotations.QueryDefine;
 import io.itit.smartjdbc.annotations.QueryField;
+import io.itit.smartjdbc.annotations.QueryField.OrGroup;
 import io.itit.smartjdbc.util.ArrayUtils;
 import io.itit.smartjdbc.util.StringUtil;
 
@@ -193,7 +196,11 @@ public class SelectProvider extends SqlProvider{
 	}
 	//
 	public SelectProvider where(String alias,String key,String op,Object value){
-		qw.where(alias, key, op, value);
+		return where(alias, key, op, value, null);
+	}
+	//
+	public SelectProvider where(String alias,String key,String op,Object value,OrGroup orGroup){
+		qw.where(alias, key, op, value,orGroup);
 		return this;
 	}
 	//
@@ -431,6 +438,51 @@ public class SelectProvider extends SqlProvider{
 		return join;
 	}
 	//
+	protected QueryInfo createQueryInfo(Query query){
+		Field[] fields = query.getClass().getFields();
+		QueryDefine queryDefine = query.getClass().getAnnotation(QueryDefine.class);
+		if (queryDefine == null) {
+			throw new IllegalArgumentException("queryDefine not found in " + query.getClass().getName());
+		}
+		QueryInfo info=new QueryInfo();
+		for (Field field : fields) {
+			try {
+				if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
+					continue;
+				}
+				if(field.getType().equals(int.class)&&field.getName().endsWith("Sort")) {
+					continue;
+				}
+				Class<?> fieldType = field.getType();
+				Object reallyValue = field.get(query);
+				if (reallyValue == null
+						|| (fieldType.equals(String.class) && StringUtil.isEmpty((String) reallyValue))) {
+					continue;
+				}
+				QueryField queryField = field.getAnnotation(QueryField.class);
+				if (queryField != null && queryField.ingore()) {
+					continue;
+				}
+				QueryFieldInfo fieldInfo=new QueryFieldInfo();
+				fieldInfo.fieldType=fieldType;
+				fieldInfo.value=reallyValue;
+				fieldInfo.queryField=queryField;
+				fieldInfo.field=field;
+				if (queryField != null) {
+					OrGroup orGroup=queryField.orGroup();
+					if(!StringUtil.isEmpty(orGroup.group())) {
+						fieldInfo.orGroup=queryField.orGroup();
+					}
+				}
+				info.fields.add(fieldInfo);
+				
+			}catch (Exception e) {
+				logger.error(e.getMessage(), e);
+				throw new IllegalArgumentException(e.getMessage());
+			}
+		}
+		return info;
+	}
 	/**
 	 * 
 	 * @param q
@@ -439,9 +491,11 @@ public class SelectProvider extends SqlProvider{
 		if(q==null) {
 			return;
 		}
+		QueryInfo queryInfo=createQueryInfo(q);
 		Map<String,Object> paraMap=new HashMap<>();
-		List<Field> fields=getQueryFields(q);
-		for (Field field : fields) {
+		List<QueryFieldInfo> fields=queryInfo.fields;
+		for (QueryFieldInfo info : fields) {
+			Field field=info.field;
 			try {
 				Object value=field.get(q);
 				paraMap.put("#{"+field.getName()+"}", value);
@@ -450,7 +504,8 @@ public class SelectProvider extends SqlProvider{
 				throw new SmartJdbcException(e.getMessage());
 			}
 		}
-		for (Field field : fields) {
+		for (QueryFieldInfo info : fields) {
+			Field field=info.field;
 			try {
 				Class<?> fieldType = field.getType();
 				Object value=field.get(q);
@@ -497,7 +552,7 @@ public class SelectProvider extends SqlProvider{
 							operator="=";
 						}
 					}
-					where(alias,dbFieldName,operator,value);
+					where(alias,dbFieldName,operator,value,info.orGroup);
 				}
 			} catch (Exception e) {
 				logger.error(e.getMessage(),e);
@@ -840,7 +895,7 @@ public class SelectProvider extends SqlProvider{
 				w.alias=MAIN_TABLE_ALIAS;
 			}
 		}
-		sql.append(qw.whereStatement());
+		sql.append(qw.whereStatement().sql);
 		return sql.toString();
 	}
 	//

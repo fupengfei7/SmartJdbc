@@ -255,4 +255,12 @@ public class DAOTestCase extends BaseTestCase{
 		List<UserSimpleInfo> list=dao.getList(UserSimpleInfo.class,QueryWhere.create());
 		System.out.println(DumpUtil.dump(list));
 	}
+	//
+	public void testQueryWithOrGroup() {
+		UserInfoQuery query=new UserInfoQuery();
+		query.orName="关";
+		query.orUserName="zhang";
+		List<UserInfo> users=dao.getList(query);
+		System.out.println(DumpUtil.dump(users));
+	}
 }
