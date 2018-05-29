@@ -27,7 +27,7 @@ public @interface QueryField {
 	public String operator() default "";
 
 	/** 自定义查询sql */
-	public String whereSql() default "";//usage: and (name like #{nameOrUserName} or userName like #{nameOrUserName})
+	public String whereSql() default "";//usage: (name like #{nameOrUserName} or userName like #{nameOrUserName})
 
 	/** 不作为查询条件 */
 	public boolean ingore() default false;
