@@ -71,7 +71,7 @@ public class BizDAO extends SmartDAO{
 	 * @return
 	 */
 	public <T> T getByIdForUpdate(Class<T> domainClass,int id){
-		return getDomain(domainClass,QueryWhere.create().where("id",id).whereSql(" for update"));
+		return getDomain(domainClass,QueryWhere.create().where("id",id).forUpdate());
 	}
 	//
 	/**

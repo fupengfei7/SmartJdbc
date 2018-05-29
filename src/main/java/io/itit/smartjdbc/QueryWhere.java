@@ -262,6 +262,9 @@ public class QueryWhere {
 				}
 			}else{
 				sql.append(" "+ w.sql+" ");
+				if(w.sqlValues!=null&&w.sqlValues.size()>0) {
+					valueList.addAll(w.sqlValues);
+				}
 			}
 			index++;
 		}

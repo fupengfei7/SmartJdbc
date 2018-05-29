@@ -224,8 +224,8 @@ public class SelectProvider extends SqlProvider{
 		return this;
 	}
 	//
-	public SelectProvider whereSql(String sql,Object ...values){
-		qw.whereSql(sql, values);
+	public SelectProvider whereSql(String sql,OrGroup orGroup,Object ...values){
+		qw.whereSql(sql,orGroup, values);
 		return this;
 	}
 	//
@@ -521,7 +521,7 @@ public class SelectProvider extends SqlProvider{
 				if(queryField!=null&&queryField.whereSql()!=null&&(!StringUtil.isEmpty(queryField.whereSql()))) {//whereSql check first
 					String whereSql=queryField.whereSql();
 					SqlBean sqlBean=parseSql(whereSql, paraMap);//eg:userName like #{userName}
-					whereSql(sqlBean.sql,sqlBean.parameters);
+					whereSql(sqlBean.sql,info.orGroup,sqlBean.parameters);
 				}else {
 					String dbFieldName=convertFieldName(field.getName());
 					if(queryField!=null&&(!StringUtil.isEmpty(queryField.field()))) {

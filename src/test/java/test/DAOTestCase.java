@@ -263,4 +263,11 @@ public class DAOTestCase extends BaseTestCase{
 		List<UserInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
 	}
+	
+	public void testQueryWithWhereSql() {
+		UserInfoQuery query=new UserInfoQuery();
+		query.nameOrUserName="zhang";
+		List<UserInfo> users=dao.getList(query);
+		System.out.println(DumpUtil.dump(users));
+	}
 }

@@ -27,6 +27,9 @@ public class UserInfoQuery extends Query {
 	
 	@QueryField(orGroup=@OrGroup(group="or"),field="userName")
 	public String orUserName;
+	
+	@QueryField(whereSql=" (a.name like concat('%',#{nameOrUserName},'%') or a.userName like concat('%',#{nameOrUserName},'%') )")
+	public String nameOrUserName;
 	//
 	// sort fields
 	public int nameSort;
