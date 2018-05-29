@@ -4,7 +4,7 @@
 
 	<groupId>com.github.icecooly</groupId>
 	<artifactId>SmartJdbc</artifactId>
-	<version>1.0.5</version>
+	<version>1.0.6</version>
 	<packaging>jar</packaging>
 	<name>SmartJdbc</name>
 	<description>Smart Jdbc</description>

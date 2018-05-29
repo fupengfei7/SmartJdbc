@@ -690,11 +690,7 @@ public class SelectProvider extends SqlProvider{
 					table1Alias=join.table2Alias;
 				}
 				if(WRAP_TYPES.contains(field.getType())){
-					if(StringUtil.isEmpty(domainField.field())) {
-						select(join.table2Alias,field.getName(),null,null,distinct,statFunc);
-					}else {
-						select(join.table2Alias,domainField.field(),null,field.getName(),distinct,statFunc);
-					}
+					addSelect(join.table2Alias, field, domainField);
 				}else {
 					List<Field> subClassFields=getPersistentFields((Class<?>)field.getGenericType());
 					for (Field subClassField : subClassFields) {
@@ -703,10 +699,23 @@ public class SelectProvider extends SqlProvider{
 					}
 				}
 			}else {
-				select(MAIN_TABLE_ALIAS, field.getName(),null,null,distinct,statFunc);
+				addSelect(MAIN_TABLE_ALIAS, field, domainField);
 				continue;
 			}
 		}
+	}
+	//
+	private void addSelect(String tableAlias,Field field,DomainField domainField) {
+		String selectField=field.getName();
+		String asField=null;
+		if(!StringUtil.isEmpty(domainField.field())) {
+			asField=field.getName();
+			selectField=domainField.field();
+		}
+		if(!StringUtil.isEmpty(domainField.statFunc())) {
+			asField=field.getName();
+		}
+		select(tableAlias,selectField,null,asField,domainField.distinct(),domainField.statFunc());
 	}
 	//
 	private String getSinglePrimaryKey(Class<?> clazz) {
@@ -800,8 +809,9 @@ public class SelectProvider extends SqlProvider{
 		sql.deleteCharAt(sql.length()-1);
 	}
 	//
-	private SqlBean build(StringBuffer sql) {
-		//from
+	//
+	private String getFromSql() {
+		StringBuffer sql=new StringBuffer();
 		sql.append(" from ").append(getTableName(domainClass)).append(" ").append(MAIN_TABLE_ALIAS).append(" ");
 		//inner join
 		this.innerJoinMap=getInnerJoins(query);
@@ -818,7 +828,11 @@ public class SelectProvider extends SqlProvider{
 			sql.append(" on ").append(join.table1Alias).append(".`"+convertFieldName(join.table1Field)+"`=").
 				append(join.table2Alias).append(".").append(convertFieldName(join.table2Field));
 		}
-		//where
+		return sql.toString();
+	}
+	//
+	private String getWhereSql() {
+		StringBuffer sql=new StringBuffer();
 		addWheres(query);
 		sql.append(" where 1=1 ");
 		for (Where w : qw.getWheres()) {
@@ -827,8 +841,11 @@ public class SelectProvider extends SqlProvider{
 			}
 		}
 		sql.append(qw.whereStatement());
-		
-		//group by
+		return sql.toString();
+	}
+	//
+	private String getGroupBySql() {
+		StringBuffer sql=new StringBuffer();
 		if(groupBys.size()>0) {
 			sql.append(" group by ");
 			for (GroupByField field : groupBys) {
@@ -839,8 +856,11 @@ public class SelectProvider extends SqlProvider{
 			}
 			sql.deleteCharAt(sql.length()-1);
 		}
-		
-		//order by
+		return sql.toString();
+	}
+	//
+	private String getOrderBySql() {
+		StringBuffer sql=new StringBuffer();
 		if(needOrderBy) {
 			addOrderBy(query);
 			if (qw.getOrderBys().size()>0) {
@@ -851,19 +871,38 @@ public class SelectProvider extends SqlProvider{
 				sql.deleteCharAt(sql.length()-1);
 			}
 		}
-		//limit
+		return sql.toString();
+	}
+	//
+	private String getLimitSql() {
+		StringBuffer sql=new StringBuffer();
 		if(needPaging) {
 			addPaging(query);
 			if(qw.getLimitEnd()!=-1) {
 				sql.append(" limit ").append(qw.getLimitStart()).append(",").append(qw.getLimitEnd());
 			}
 		}
-		//for update
+		return sql.toString();
+	}
+	//
+	private String getForUpdateSql() {
 		if(isForUpdate) {
-			sql.append(" for update ");
+			return " for update ";
 		}
-		//
-		SqlBean bean=new SqlBean(sql.toString(),qw.whereValues());
+		return "";
+	}
+	//
+	private SqlBean build(StringBuffer selectSql) {
+		SqlBean bean=new SqlBean();
+		bean.selectSql=selectSql.toString();
+		bean.fromSql=getFromSql();
+		bean.whereSql=getWhereSql();
+		bean.groupBySql=getGroupBySql();
+		bean.orderBySql=getOrderBySql();
+		bean.limitSql=getLimitSql();
+		bean.forUpdateSql=getForUpdateSql();
+		bean.sql=bean.toSql();
+		bean.parameters=qw.whereValues();
 		return bean;
 	}
 		
