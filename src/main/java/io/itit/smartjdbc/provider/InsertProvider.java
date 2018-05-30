@@ -8,6 +8,7 @@ import java.util.TreeSet;
 
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
+import io.itit.smartjdbc.annotations.DomainField;
 import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.util.JSONUtil;
 
@@ -38,13 +39,17 @@ public class InsertProvider extends SqlProvider{
 			excludesNames.add(e);
 		}
 		List<Object>fieldList=new ArrayList<Object>();
-		List<Field> fl=getPersistentFields(type);
-		for (Field f : fl) {
+		List<Field> list=getPersistentFields(type);
+		for (Field f : list) {
 			if (excludesNames.contains(f.getName())) {
 				continue;
 			}
 			NonPersistent nonPersistent=f.getAnnotation(NonPersistent.class);
 			if(nonPersistent!=null) {
+				continue;
+			}
+			DomainField domainField=f.getAnnotation(DomainField.class);
+			if(domainField!=null&&domainField.autoIncrement()) {
 				continue;
 			}
 			String fieldName = convertFieldName(f.getName());

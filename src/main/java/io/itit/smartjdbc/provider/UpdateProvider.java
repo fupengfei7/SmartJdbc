@@ -11,6 +11,7 @@ import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.QueryWhere.WhereStatment;
+import io.itit.smartjdbc.annotations.DomainField;
 import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.util.JSONUtil;
 
@@ -56,6 +57,10 @@ public class UpdateProvider extends SqlProvider{
 			}
 			NonPersistent nonPersistent=f.getAnnotation(NonPersistent.class);
 			if(nonPersistent!=null) {
+				continue;
+			}
+			DomainField domainField=f.getAnnotation(DomainField.class);
+			if(domainField!=null&&domainField.autoIncrement()) {
 				continue;
 			}
 			String fieldName = convertFieldName(f.getName());
