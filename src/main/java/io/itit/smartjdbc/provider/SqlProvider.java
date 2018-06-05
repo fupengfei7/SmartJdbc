@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,6 +150,7 @@ public abstract class SqlProvider {
 	 * @return
 	 */
 	public static List<Field> getPersistentFields(Class<?> domainClass){
+		Set<String> fieldNames=new HashSet<>();
 		List<Field> fields=new ArrayList<>();
 		for (Field field : domainClass.getFields()) {
 			if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
@@ -157,6 +159,10 @@ public abstract class SqlProvider {
 			if(field.getAnnotation(NonPersistent.class)!=null) {
 				continue;
 			}
+			if(fieldNames.contains(field.getName())) {
+				continue;
+			}
+			fieldNames.add(field.getName());
 			fields.add(field);
 		}
 		return fields;
