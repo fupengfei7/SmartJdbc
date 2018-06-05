@@ -80,21 +80,21 @@ public class SelectProvider extends SqlProvider{
 		public int order;
 	}
 	//
-	Class<?> domainClass;
-	Query query;
-	boolean isSelectCount;
-	boolean needPaging;
-	boolean needOrderBy;
-	boolean isForUpdate;
-	List<SelectField> selectFields;
-	boolean ingoreSelectDomainFiled;
-	Set<String> excludeFields;//userName not user_name
-	Map<String,Join> innerJoinMap;
-	Map<String,String> innerJoinFieldAliasMap;
-	List<Join> innerJoins;//inner join tableName alias on 
-	List<Join> leftJoins;//left join tableName alias on 
-	QueryWhere qw;
-	List<GroupByField> groupBys;
+	protected Class<?> domainClass;
+	protected Query query;
+	protected boolean isSelectCount;
+	protected boolean needPaging;
+	protected boolean needOrderBy;
+	protected boolean isForUpdate;
+	protected List<SelectField> selectFields;
+	protected boolean ingoreSelectDomainFiled;
+	protected Set<String> excludeFields;//userName not user_name
+	protected Map<String,Join> innerJoinMap;
+	protected Map<String,String> innerJoinFieldAliasMap;
+	protected List<Join> innerJoins;//inner join tableName alias on 
+	protected List<Join> leftJoins;//left join tableName alias on 
+	protected QueryWhere qw;
+	protected List<GroupByField> groupBys;
 	//
 	public SelectProvider(Class<?> domainClass) {
 		this.domainClass=domainClass;
@@ -175,7 +175,7 @@ public class SelectProvider extends SqlProvider{
 		return this;
 	}
 	//
-	private SelectField createSelectField(String tableAlias,String field,
+	protected SelectField createSelectField(String tableAlias,String field,
 			String preAsField,String asField,boolean distinct,String statFunction) {
 		SelectField sf=new SelectField();
 		sf.tableAlias=tableAlias;
@@ -239,7 +239,7 @@ public class SelectProvider extends SqlProvider{
 		return this;
 	}
 	//
-	private GroupByField createGroupByField(String tableAlias,String field) {
+	protected GroupByField createGroupByField(String tableAlias,String field) {
 		GroupByField groupByField=new GroupByField();
 		groupByField.tableAlias=tableAlias;
 		groupByField.field=field;
@@ -301,7 +301,7 @@ public class SelectProvider extends SqlProvider{
 		return fieldList;
 	}
 	//
-	private boolean isValidInnerJoin(InnerJoin innerJoin) {
+	protected boolean isValidInnerJoin(InnerJoin innerJoin) {
 		if(innerJoin==null) {
 			return false;
 		}
@@ -424,7 +424,7 @@ public class SelectProvider extends SqlProvider{
 		return map;
 	}
 	//
-	private Join createInnerJoin(String key,String table1Alias,String table2Alias,
+	protected Join createInnerJoin(String key,String table1Alias,String table2Alias,
 			Class<?> table1,Class<?> table2,String table1Field,String table2Field) {
 		Join join=new Join();
 		join.key=key;
@@ -593,7 +593,7 @@ public class SelectProvider extends SqlProvider{
 		return new SqlBean(newSql,values);
 	}
 	//
-	private int getSortFieldOrder(String[] sortFields,String fieldName) {
+	protected int getSortFieldOrder(String[] sortFields,String fieldName) {
 		if(sortFields==null||sortFields.length==0) {
 			return 0;
 		}
@@ -608,8 +608,16 @@ public class SelectProvider extends SqlProvider{
 	}
 	//
 	protected void addOrderBy(Query query) {
+		List<String> orderByList=addOrderByList(query);
+		for (String e : orderByList) {
+			orderBy(e);
+		}
+	}
+	//
+	public List<String> addOrderByList(Query query) {
+		List<String> orderByList=new ArrayList<>();
 		if(query==null) {
-			return;
+			return orderByList;
 		}
 		boolean haveSort=false;
 		Field[] fields = query.getClass().getFields();
@@ -648,9 +656,9 @@ public class SelectProvider extends SqlProvider{
 		});
 		for (SortField e : sortFields) {
 			if(e.sortType==Query.SORT_TYPE_ASC) {
-				orderBy(e.fieldName+" asc");
+				orderByList.add(e.fieldName+" asc");
 			}else if(e.sortType==Query.SORT_TYPE_DESC) {
-				orderBy(e.fieldName+" desc");
+				orderByList.add(e.fieldName+" desc");
 			}
 		}
 		if(!haveSort) {
@@ -658,7 +666,7 @@ public class SelectProvider extends SqlProvider{
 			if(orderBys!=null&&orderBys.orderBys()!=null) {
 				for (OrderBy orderBy : orderBys.orderBys()) {
 					if (query.orderType != null&& query.orderType == orderBy.orderType()) {
-						orderBy(orderBy.sql());
+						orderByList.add(orderBy.sql());
 					}
 				}
 			}
@@ -666,6 +674,7 @@ public class SelectProvider extends SqlProvider{
 				Config.getDefaultOrderBy().accept(this,query);
 			}
 		}
+		return orderByList;
 	}
 	//
 	protected void addPaging(Query query) {
@@ -675,7 +684,7 @@ public class SelectProvider extends SqlProvider{
 		this.limit(query.getStartPageIndex(),query.pageSize);
 	}
 	//
-	private void buildSelectDomainFields(){
+	protected void buildSelectDomainFields(){
 		int index=1;
 		Map<String, Join> map = new LinkedHashMap<>();
 		Field[] fields=domainClass.getFields();
@@ -760,7 +769,7 @@ public class SelectProvider extends SqlProvider{
 		}
 	}
 	//
-	private void addSelect(String tableAlias,Field field,DomainField domainField) {
+	protected void addSelect(String tableAlias,Field field,DomainField domainField) {
 		String selectField=field.getName();
 		String asField=null;
 		if(!StringUtil.isEmpty(domainField.field())) {
@@ -773,7 +782,7 @@ public class SelectProvider extends SqlProvider{
 		select(tableAlias,selectField,null,asField,domainField.distinct(),domainField.statFunc());
 	}
 	//
-	private String getSinglePrimaryKey(Class<?> clazz) {
+	protected String getSinglePrimaryKey(Class<?> clazz) {
 		List<Field> list=SqlProvider.getPrimaryKey(clazz);
 		if(list.size()>1||list.size()==0) {
 			throw new SmartJdbcException("PrimaryKey column can only be one");
@@ -781,7 +790,7 @@ public class SelectProvider extends SqlProvider{
 		return list.get(0).getName();
 	}
 	//
-	private Join getJoin(String key,List<Join> list) {
+	protected Join getJoin(String key,List<Join> list) {
 		for (Join join : list) {
 			if(join.key.equals(key)) {
 				return join;
@@ -790,12 +799,12 @@ public class SelectProvider extends SqlProvider{
 		return null;
 	}
 	//
-	private Join createLeftJoin(String key,String table1Alias,String table2Alias,Class<?> table1,Class<?> table2,
+	protected Join createLeftJoin(String key,String table1Alias,String table2Alias,Class<?> table1,Class<?> table2,
 			String table1Field) {
 		return createLeftJoin(key, table1Alias, table2Alias, table1, table2, table1Field, getSinglePrimaryKey(table2));
 	}
 	//
-	private Join createLeftJoin(String key,String table1Alias,String table2Alias,Class<?> table1,Class<?> table2,
+	protected Join createLeftJoin(String key,String table1Alias,String table2Alias,Class<?> table1,Class<?> table2,
 			String table1Field,String table2Field) {
 		Join join = new Join();
 		join.key=key;
@@ -837,7 +846,7 @@ public class SelectProvider extends SqlProvider{
 		return build(sql);
 	}
 	
-	private void addSelectFields(StringBuffer sql) {
+	protected void addSelectFields(StringBuffer sql) {
 		for (SelectField field : selectFields) {
 			if(field.distinct) {
 				sql.append(" distinct ");
@@ -865,7 +874,7 @@ public class SelectProvider extends SqlProvider{
 	}
 	//
 	//
-	private String getFromSql() {
+	protected String getFromSql() {
 		StringBuffer sql=new StringBuffer();
 		sql.append(" from ").append(getTableName(domainClass)).append(" ").append(MAIN_TABLE_ALIAS).append(" ");
 		//inner join
@@ -886,7 +895,7 @@ public class SelectProvider extends SqlProvider{
 		return sql.toString();
 	}
 	//
-	private String getWhereSql() {
+	protected String getWhereSql() {
 		StringBuffer sql=new StringBuffer();
 		addWheres(query);
 		sql.append(" where 1=1 ");
@@ -899,7 +908,7 @@ public class SelectProvider extends SqlProvider{
 		return sql.toString();
 	}
 	//
-	private String getGroupBySql() {
+	protected String getGroupBySql() {
 		StringBuffer sql=new StringBuffer();
 		if(groupBys.size()>0) {
 			sql.append(" group by ");
@@ -914,7 +923,7 @@ public class SelectProvider extends SqlProvider{
 		return sql.toString();
 	}
 	//
-	private String getOrderBySql() {
+	protected String getOrderBySql() {
 		StringBuffer sql=new StringBuffer();
 		if(needOrderBy) {
 			addOrderBy(query);
@@ -929,7 +938,7 @@ public class SelectProvider extends SqlProvider{
 		return sql.toString();
 	}
 	//
-	private String getLimitSql() {
+	protected String getLimitSql() {
 		StringBuffer sql=new StringBuffer();
 		if(needPaging) {
 			addPaging(query);
@@ -940,14 +949,14 @@ public class SelectProvider extends SqlProvider{
 		return sql.toString();
 	}
 	//
-	private String getForUpdateSql() {
+	protected String getForUpdateSql() {
 		if(isForUpdate) {
 			return " for update ";
 		}
 		return "";
 	}
 	//
-	private SqlBean build(StringBuffer selectSql) {
+	protected SqlBean build(StringBuffer selectSql) {
 		SqlBean bean=new SqlBean();
 		bean.selectSql=selectSql.toString();
 		bean.fromSql=getFromSql();

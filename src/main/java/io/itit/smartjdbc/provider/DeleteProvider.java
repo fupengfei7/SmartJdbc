@@ -11,8 +11,8 @@ import io.itit.smartjdbc.SqlBean;
  */
 public class DeleteProvider extends SqlProvider{
 	//
-	Class<?> domainClass;
-	QueryWhere qw;
+	protected Class<?> domainClass;
+	protected QueryWhere qw;
 	//
 	public DeleteProvider(Class<?> domainClass,QueryWhere qw) {
 		this.domainClass=domainClass;

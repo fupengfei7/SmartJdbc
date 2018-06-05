@@ -19,8 +19,8 @@ import io.itit.smartjdbc.util.JSONUtil;
  */
 public class InsertProvider extends SqlProvider{
 	//
-	Object bean;
-	String[] excludeProperties;
+	protected Object bean;
+	protected String[] excludeProperties;
 	//
 	public InsertProvider(Object bean,String ... excludeProperties) {
 		this.bean=bean;

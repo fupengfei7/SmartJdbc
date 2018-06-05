@@ -22,10 +22,10 @@ import io.itit.smartjdbc.util.JSONUtil;
  */
 public class UpdateProvider extends SqlProvider{
 	//
-	Object bean;
-	QueryWhere qw;
-	String[] excludeProperties;
-	boolean excludeNull;
+	protected Object bean;
+	protected QueryWhere qw;
+	protected String[] excludeProperties;
+	protected boolean excludeNull;
 	//
 	public UpdateProvider(Object bean,boolean excludeNull,String ... excludeProperties) {
 		this(bean, null, excludeNull, excludeProperties);

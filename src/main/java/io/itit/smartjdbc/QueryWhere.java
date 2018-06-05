@@ -54,7 +54,7 @@ public class QueryWhere {
 	protected int limitEnd=-1;
 	protected boolean forUpdate;
 	//
-	private QueryWhere() {
+	protected QueryWhere() {
 		wheres=new LinkedList<>();
 		orWheres=new LinkedHashMap<>();
 		orderBys=new LinkedHashSet<>();
