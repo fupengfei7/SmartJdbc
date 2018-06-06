@@ -225,41 +225,62 @@ public class QueryWhere {
 				}
 			}
 			if(w.key!=null){
-				String value="?";
-				if(w.alias!=null) {
-					sql.append(w.alias).append(".");
-				}
-				sql.append("`").append(w.key).append("` ");
-				sql.append(w.operator).append(" ");
-				if(w.operator.trim().equalsIgnoreCase("like")){
-					sql.append(" concat('%',"+value+",'%') ");
-					valueList.add(w.value);
-				}else if(w.operator.trim().equalsIgnoreCase("in")) {
-					Object[] values=(Object[])w.value;
-					if(values!=null&&values.length>0) {
-						sql.append(" ( ");
-						for (int i = 0; i < values.length; i++) {
-							sql.append(" ?,");
-							valueList.add(values[i]);
+				Set<String> keys=new LinkedHashSet<>();
+				if(w.key.indexOf(",")!=-1) {
+					String[] keyList=w.key.split(",");
+					for (String key : keyList) {
+						if(StringUtil.isEmpty(key.trim())) {
+							continue;
 						}
-						sql.deleteCharAt(sql.length() - 1);
-						sql.append(" ) ");
+						keys.add(key);
 					}
-				}else if(w.operator.trim().equalsIgnoreCase("not in")) {
-					Object[] values=(Object[])w.value;
-					if(values!=null&&values.length>0) {
-						sql.append(" ( ");
-						for (int i = 0; i < values.length; i++) {
-							sql.append(" ?,");
-							valueList.add(values[i]);
-						}
-						sql.deleteCharAt(sql.length() - 1);
-						sql.append(" ) ");
-					}
-				}else{
-					sql.append("  "+value+" ");
-					valueList.add(w.value);
+				}else {
+					keys.add(w.key);
 				}
+				sql.append(" ( ");
+				int keyIndex=1;
+				for (String key : keys) {
+					String value="?";
+					if(w.alias!=null) {
+						sql.append(w.alias).append(".");
+					}
+					sql.append("`").append(key).append("` ");
+					sql.append(w.operator).append(" ");
+					if(w.operator.trim().equalsIgnoreCase("like")){
+						sql.append(" concat('%',"+value+",'%') ");
+						valueList.add(w.value);
+					}else if(w.operator.trim().equalsIgnoreCase("in")) {
+						Object[] values=(Object[])w.value;
+						if(values!=null&&values.length>0) {
+							sql.append(" ( ");
+							for (int i = 0; i < values.length; i++) {
+								sql.append(" ?,");
+								valueList.add(values[i]);
+							}
+							sql.deleteCharAt(sql.length() - 1);
+							sql.append(" ) ");
+						}
+					}else if(w.operator.trim().equalsIgnoreCase("not in")) {
+						Object[] values=(Object[])w.value;
+						if(values!=null&&values.length>0) {
+							sql.append(" ( ");
+							for (int i = 0; i < values.length; i++) {
+								sql.append(" ?,");
+								valueList.add(values[i]);
+							}
+							sql.deleteCharAt(sql.length() - 1);
+							sql.append(" ) ");
+						}
+					}else{
+						sql.append("  "+value+" ");
+						valueList.add(w.value);
+					}
+					if(keyIndex<keys.size()) {
+						sql.append(" or ");
+					}
+					keyIndex++;
+				}
+				sql.append(" ) ");
 			}else{
 				sql.append(" "+ w.sql+" ");
 				if(w.sqlValues!=null&&w.sqlValues.size()>0) {

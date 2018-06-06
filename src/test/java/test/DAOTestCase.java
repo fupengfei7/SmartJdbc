@@ -78,6 +78,7 @@ public class DAOTestCase extends BaseTestCase{
 	public void testGetUsers() {
 		UserQuery query=new UserQuery();
 		query.userName="test";
+		query.nameOrUserName="t";
 		List<User> list=dao.getList(query,"createTime","updateTime");
 		System.out.println(DumpUtil.dump(list));
 	}
@@ -256,10 +257,9 @@ public class DAOTestCase extends BaseTestCase{
 		System.out.println(DumpUtil.dump(list));
 	}
 	//
-	public void testQueryWithOrGroup() {
+	public void testQueryUserInfoList() {
 		UserInfoQuery query=new UserInfoQuery();
-		query.orName="关";
-		query.orUserName="zhang";
+		query.nameOrUserName="关";
 		List<UserInfo> users=dao.getList(query);
 		System.out.println(DumpUtil.dump(users));
 	}

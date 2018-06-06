@@ -3,7 +3,6 @@ package test.domain.query;
 import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.annotations.QueryDefine;
 import io.itit.smartjdbc.annotations.QueryField;
-import io.itit.smartjdbc.annotations.QueryField.OrGroup;
 import test.domain.info.UserInfo;
 
 /**
@@ -22,13 +21,7 @@ public class UserInfoQuery extends Query {
 	@QueryField(foreignKeyFields = "roleId", field = "name")
 	public String roleName;
 	
-	@QueryField(orGroup=@OrGroup(group="or"),field="name")
-	public String orName;
-	
-	@QueryField(orGroup=@OrGroup(group="or"),field="userName")
-	public String orUserName;
-	
-	@QueryField(whereSql=" (a.name like concat('%',#{nameOrUserName},'%') or a.userName like concat('%',#{nameOrUserName},'%') )")
+	@QueryField(field="name,userName")
 	public String nameOrUserName;
 	//
 	// sort fields
