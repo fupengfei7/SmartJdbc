@@ -518,7 +518,7 @@ public class SelectProvider extends SqlProvider{
 					alias=innerJoinFieldAliasMap.get(field.getName());
 				}
 				//
-				if(queryField!=null&&queryField.whereSql()!=null&&(!StringUtil.isEmpty(queryField.whereSql()))) {//whereSql check first
+				if(queryField!=null&&!StringUtil.isEmpty(queryField.whereSql())) {//whereSql check first
 					String whereSql=queryField.whereSql();
 					SqlBean sqlBean=parseSql(whereSql, paraMap);//eg:userName like #{userName}
 					whereSql(sqlBean.sql,info.orGroup,sqlBean.parameters);
