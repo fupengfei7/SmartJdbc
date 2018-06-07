@@ -10,7 +10,7 @@ SmartJdbc可以让你不用写DAO,不用写SQL。
 
 ## 2.1 安装
 
-要使用 SmartJdbc， 只需将 SmartJdbc-1.0.5.jar 文件置于 classpath 中即可。
+要使用 SmartJdbc， 只需将 SmartJdbc-1.0.8.jar 文件置于 classpath 中即可。
 
 如果使用 Maven 来构建项目，则需将下面的 dependency 代码置于 pom.xml 文件中：
 
@@ -18,7 +18,7 @@ SmartJdbc可以让你不用写DAO,不用写SQL。
 <dependency>
     <groupId>com.github.icecooly</groupId>
     <artifactId>SmartJdbc</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.8</version>
 </dependency>
 <dependency>
     <groupId>com.github.icecooly</groupId>
@@ -30,7 +30,7 @@ SmartJdbc可以让你不用写DAO,不用写SQL。
 如果使用 Gradle 来构建项目，则需将下面的代码置于 build.gradle 文件的 dependencies 代码块中：
 
 ```groovy
-compile 'com.github.icecooly:SmartJdbc:1.0.5'
+compile 'com.github.icecooly:SmartJdbc:1.0.8'
 compile 'com.github.icecooly:SmartJdbc-Spring:1.0.0'
 ```
 
