@@ -658,10 +658,10 @@ public class SmartDAO extends BaseDAO{
 		if(clazz==short.class||clazz==Short.class){
 			return (S) queryForShort(sql,parameters);
 		}
-		if(clazz==Double.class||clazz==Double.class){
+		if(clazz==double.class||clazz==Double.class){
 			return (S) queryForDouble(sql,parameters);
 		}
-		if(clazz==Float.class||clazz==Float.class){
+		if(clazz==float.class||clazz==Float.class){
 			return (S) queryForFloat(sql,parameters);
 		}
 		throw new IllegalArgumentException(clazz.getSimpleName()+" not supported");
