@@ -3,6 +3,7 @@ package test.domain.info;
 import io.itit.smartjdbc.annotations.DomainDefine;
 import io.itit.smartjdbc.annotations.DomainField;
 import test.domain.Article;
+import test.domain.User;
 
 /**
  * 文章详情
@@ -19,4 +20,8 @@ public class ArticleInfo extends Article{
 	/**创建人所在部门名称*/
 	@DomainField(foreignKeyFields="createUserId,departmentId",field="name")
 	public String createUserDepartmentName;
+	
+	/***/
+	@DomainField(foreignKeyFields="updateUserId")
+	public User updateUser;
 }
