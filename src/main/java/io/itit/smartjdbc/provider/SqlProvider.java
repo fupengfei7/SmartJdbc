@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +18,10 @@ import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.annotations.DomainDefine;
+import io.itit.smartjdbc.annotations.DomainField;
 import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.annotations.PrimaryKey;
+import io.itit.smartjdbc.util.ClassUtils;
 import io.itit.smartjdbc.util.DumpUtil;
 import io.itit.smartjdbc.util.StringUtil;
 
@@ -146,24 +147,34 @@ public abstract class SqlProvider {
 	
 	/**
 	 * 
+	 * @param field
+	 * @return
+	 */
+	public static boolean isPersistentField(Field field) {
+		if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
+			return false;
+		}
+		if(field.getAnnotation(NonPersistent.class)!=null) {
+			return false;
+		}
+		DomainField domainField=field.getAnnotation(DomainField.class);
+		if(domainField!=null) {
+			return domainField.persistent();
+		}
+		return true;
+	}
+	/**
+	 * 
 	 * @param domainClass
 	 * @return
 	 */
 	public static List<Field> getPersistentFields(Class<?> domainClass){
-		Set<String> fieldNames=new HashSet<>();
 		List<Field> fields=new ArrayList<>();
-		for (Field field : domainClass.getFields()) {
-			if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
-				continue;
+		List<Field> fieldList=ClassUtils.getFieldList(domainClass);
+		for (Field field : fieldList) {
+			if(isPersistentField(field)) {
+				fields.add(field);
 			}
-			if(field.getAnnotation(NonPersistent.class)!=null) {
-				continue;
-			}
-			if(fieldNames.contains(field.getName())) {
-				continue;
-			}
-			fieldNames.add(field.getName());
-			fields.add(field);
 		}
 		return fields;
 	}

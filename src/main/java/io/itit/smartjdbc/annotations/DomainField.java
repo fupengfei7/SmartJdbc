@@ -38,4 +38,6 @@ public @interface DomainField {
 	
 	/**ignore or not when select*/
 	boolean ignoreWhenSelect() default false;
+	/**是否持久化*/
+	boolean persistent() default true;
 }

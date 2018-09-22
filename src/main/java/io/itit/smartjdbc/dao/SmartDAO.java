@@ -11,6 +11,7 @@ import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,9 +20,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.DAOInterceptor;
-import io.itit.smartjdbc.Param;
+import io.itit.smartjdbc.SqlParam;
 import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.ResultSetHandler;
@@ -43,6 +47,8 @@ import io.itit.smartjdbc.util.StringUtil;
  * @author skydu
  */
 public class SmartDAO extends BaseDAO{
+	//
+	private static Logger logger=LoggerFactory.getLogger(SmartDAO.class);
 	//
 	/**
 	 * 
@@ -105,7 +111,20 @@ public class SmartDAO extends BaseDAO{
 	 */
 	public int update(Object bean,
 			String... excludeFields){
-		return update(bean,false,excludeFields);
+		return update(bean,false,null,excludeFields);
+	}
+	
+	/**
+	 * 
+	 * @param bean
+	 * @param includeFields
+	 * @param excludeFields
+	 * @return
+	 */
+	public int update(Object bean,
+			Set<String> includeFields,
+			String... excludeFields) {
+		return update(bean,false,includeFields,excludeFields);
 	}
 	//
 	/**
@@ -117,9 +136,10 @@ public class SmartDAO extends BaseDAO{
 	 */
 	public int update(Object bean,
 			boolean excludeNull,
+			Set<String> includeFields,
 			String... excludeFields){
 		beforeUpdate(bean,excludeNull,excludeFields);
-		SqlBean sqlBean=new UpdateProvider(bean, excludeNull, excludeFields).build();
+		SqlBean sqlBean=new UpdateProvider(bean, excludeNull,includeFields,excludeFields).build();
 		int result=executeUpdate(sqlBean.sql,sqlBean.parameters);
 		afterUpdate(result,bean,excludeNull,excludeFields);
 		return result;
@@ -203,11 +223,27 @@ public class SmartDAO extends BaseDAO{
 	 * 
 	 * @param domainClass
 	 * @param qw
+	 * @param excludeFields
 	 * @return
 	 */
 	public <T> T getDomain(Class<T> domainClass,QueryWhere qw,String ... excludeFields){
-		SqlBean sqlBean=new SelectProvider(domainClass).query(qw).
-				excludeFields(excludeFields).build();
+		return getDomain(domainClass, qw, null,excludeFields);
+	}
+	
+	/**
+	 * 
+	 * @param domainClass
+	 * @param qw
+	 * @param includeFields
+	 * @param excludeFields
+	 * @return
+	 */
+	public <T> T getDomain(Class<T> domainClass,QueryWhere qw,Set<String> includeFields,String ... excludeFields){
+		SqlBean sqlBean=new SelectProvider(domainClass).
+				query(qw).
+				includeFields(includeFields).
+				excludeFields(excludeFields).
+				build();
 		return queryObject(domainClass,sqlBean.sql,sqlBean.parameters);
 	}
 	
@@ -215,7 +251,7 @@ public class SmartDAO extends BaseDAO{
 	 * 
 	 * @param query
 	 */
-	private void beforeQuery(Query query) {
+	protected void beforeQuery(Query query) {
 		List<DAOInterceptor> interceptors=Config.getDaoInterceptors();
 		if(interceptors!=null) {
 			for (DAOInterceptor interceptor : interceptors) {
@@ -232,8 +268,10 @@ public class SmartDAO extends BaseDAO{
 	public <T> T getDomain(Query query,String ... excludeFields){
 		beforeQuery(query);
 		Class<T> domainClass=(Class<T>) getDomainClass(query);
-		SqlBean sqlBean=new SelectProvider(domainClass).query(query).
-				excludeFields(excludeFields).build();
+		SqlBean sqlBean=new SelectProvider(domainClass).
+				query(query).
+				excludeFields(excludeFields).
+				build();
 		return queryObject(domainClass,sqlBean.sql,sqlBean.parameters);
 	}
 	
@@ -253,12 +291,38 @@ public class SmartDAO extends BaseDAO{
 	 * 
 	 * @param domainClass
 	 * @param qw
+	 * @param excludeFields
 	 * @return
 	 */
 	public <T> List<T> getList(Class<T> domainClass,QueryWhere qw,String ... excludeFields){
+		return getList(domainClass, qw, null, excludeFields);
+	}
+	
+	/**
+	 * 
+	 * @param domainClass
+	 * @param qw
+	 * @param includeFields
+	 * @param excludeFields
+	 * @return
+	 */
+	public <T> List<T> getList(Class<T> domainClass,QueryWhere qw,Set<String> includeFields,String ... excludeFields){
 		SqlBean sqlBean=new SelectProvider(domainClass).query(qw).
-				excludeFields(excludeFields).needPaging(true).build();
+				includeFields(includeFields).
+				excludeFields(excludeFields).
+				needPaging(true).
+				build();
 		return queryList(domainClass,sqlBean.sql,sqlBean.parameters);
+	}
+	
+	/**
+	 * 
+	 * @param query
+	 * @param excludeFields
+	 * @return
+	 */
+	public <T> List<T> getList(Query query,String ... excludeFields){
+		return getList(query, null, excludeFields);
 	}
 	
 	/**
@@ -266,11 +330,15 @@ public class SmartDAO extends BaseDAO{
 	 * @param query
 	 * @return
 	 */
-	public <T> List<T> getList(Query query,String ... excludeFields){
+	public <T> List<T> getList(Query query,Set<String> includeFields,String ... excludeFields){
 		beforeQuery(query);
 		Class<T> domainClass=getDomainClass(query);
-		SqlBean sqlBean=new SelectProvider(domainClass).query(query).
-				excludeFields(excludeFields).needPaging(true).build();
+		SqlBean sqlBean=new SelectProvider(domainClass).
+				query(query).
+				includeFields(includeFields).
+				excludeFields(excludeFields).
+				needPaging(true).
+				build();
 		return queryList(domainClass,sqlBean.sql,sqlBean.parameters);
 	}
 	
@@ -320,6 +388,7 @@ public class SmartDAO extends BaseDAO{
 		SqlBean sqlBean=new SelectProvider(domainClass).query(query).excludeFields(excludeFields).build();
 		return queryList(domainClass,sqlBean.sql,sqlBean.parameters);
 	}
+	
 	/**
 	 * 
 	 * @param domainClass
@@ -387,6 +456,7 @@ public class SmartDAO extends BaseDAO{
 			convertBean(instance,rs);
 			return instance;
 		}catch(Exception e){
+			logger.error(e.getMessage(),e);
 			throw new SmartJdbcException(e);
 		}
 	} 
@@ -423,6 +493,19 @@ public class SmartDAO extends BaseDAO{
 		WRAP_TYPES.add(float.class);
 		WRAP_TYPES.add(double.class);
 	}
+	//
+	private List<Field> getNoStaticFinalFields(Class<?> clazz) {
+		List<Field> fieldList=new ArrayList<>();
+		Field[] fields = clazz.getFields();
+		for (Field field : fields) {
+			if (Modifier.isStatic(field.getModifiers()) || 
+					Modifier.isFinal(field.getModifiers())) {
+				continue;
+			}
+			fieldList.add(field);
+		}
+		return fieldList;
+	}
 	/**
 	 * 
 	 * @param o
@@ -445,7 +528,14 @@ public class SmartDAO extends BaseDAO{
 		for(int i=1;i<=columnCount;i++) {
 			columnNames.add(rsmd.getColumnLabel(i));
 		}
-		for (Field f : type.getFields()) {
+		List<Field> fields=getNoStaticFinalFields(type);
+		for (Field f : fields) {
+			String fieldName = convertFieldName(f.getName());
+			if(preAliasField!=null) {
+				fieldName=preAliasField+fieldName;
+			}
+		}
+		for (Field f : fields) {
 			if (excludesNames.contains(f.getName())) {
 				continue;
 			}
@@ -454,10 +544,6 @@ public class SmartDAO extends BaseDAO{
 				fieldName=preAliasField+fieldName;
 			}
 			Class<?> fieldType = f.getType();
-			if (Modifier.isStatic(f.getModifiers())||
-					Modifier.isFinal(f.getModifiers())) {
-				continue;
-			}
 			DomainField domainField=f.getAnnotation(DomainField.class);
 			if(domainField!=null&&domainField.ignoreWhenSelect()) {
 				continue;
@@ -500,7 +586,7 @@ public class SmartDAO extends BaseDAO{
 					value = bos.toByteArray();
 				}
 			} else {
-				if(domainField==null||StringUtil.isEmpty(domainField.foreignKeyFields())) {
+				if(columnNames.contains(fieldName)) {
 					String strValue=rs.getString(fieldName);
 					if(strValue!=null){
 						Type genericType=f.getGenericType();
@@ -509,6 +595,12 @@ public class SmartDAO extends BaseDAO{
 							 if(typeArguments.length==1) {
 								 if(List.class.isAssignableFrom(fieldType) && (typeArguments[0] instanceof Class)) {
 									 value=JSONUtil.fromJsonList(strValue,(Class<?>) typeArguments[0]);
+								 }else if(Set.class.isAssignableFrom(fieldType) && (typeArguments[0] instanceof Class)) {
+									 value=JSONUtil.fromJsonSet(strValue,(Class<?>) typeArguments[0]);
+								 }
+							 }else if(typeArguments.length==2) {
+								 if(Map.class.isAssignableFrom(fieldType) && (typeArguments[0] instanceof Class) && (typeArguments[1] instanceof Class)) {
+									 value=JSONUtil.fromJsonMap(strValue,(Class<?>) typeArguments[0],(Class<?>) typeArguments[1]);
 								 }
 							 }
 						 }else {
@@ -516,10 +608,13 @@ public class SmartDAO extends BaseDAO{
 						 }
 					}
 				}else {
-					Class<?> subClass=((Class<?>)f.getGenericType());
-					value=subClass.newInstance();
-					String subPreAliasField=f.getName()+"_";
-					convertBean(value, subPreAliasField, rs, excludeFields);
+					Type genericType=f.getGenericType();
+					if ( genericType instanceof Class) { //only support Class
+						Class<?> subClass=((Class<?>)f.getGenericType());
+						value=subClass.newInstance();
+						String subPreAliasField=f.getName()+"_";
+						convertBean(value, subPreAliasField, rs, excludeFields);
+					}
 				}
 			}
 			f.setAccessible(true);
@@ -630,8 +725,8 @@ public class SmartDAO extends BaseDAO{
 		Map<String,Object> paraMap=new HashMap<>();
 		if(parameters!=null) {
 			for (Object para : parameters) {
-				if(para instanceof Param) {
-					Param p=(Param) para;
+				if(para instanceof SqlParam) {
+					SqlParam p=(SqlParam) para;
 					if(StringUtil.isEmpty(p.name)){
 						throw new SmartJdbcException("Param name cann't be null");
 					}
@@ -641,7 +736,6 @@ public class SmartDAO extends BaseDAO{
 		}
 		return SelectProvider.parseSql(sql, paraMap);//#
 	}
-	
 	@SuppressWarnings("unchecked")
 	public <S extends Number>S sum(Query query,Class<S> clazz,String field){
 		Class<?> domainClass=getDomainClass(query);
@@ -676,8 +770,8 @@ public class SmartDAO extends BaseDAO{
 	 */
 	@SuppressWarnings("unchecked")
 	public <S extends Number>S sum(Class<?> domainClass,Class<S> clazz,String field,QueryWhere qt){
-		SqlBean sqlBean=new SelectProvider(domainClass).query(qt).sum(field).
-				ingoreSelectDomainFiled().needOrderBy(false).build();
+		SqlBean sqlBean=new SelectProvider(domainClass).sum(field).query(qt).needOrderBy(false).
+				ingoreSelectDomainFiled().build();
 		String sql=sqlBean.sql;
 		Object[] parameters=sqlBean.parameters;
 		if(clazz==long.class||clazz==Long.class){

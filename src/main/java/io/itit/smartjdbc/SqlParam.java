@@ -5,13 +5,13 @@ package io.itit.smartjdbc;
  * @author skydu
  *
  */
-public class Param {
+public class SqlParam {
 
 	public String name;
 	
 	public Object value;
 	
-	public Param(String name,Object value) {
+	public SqlParam(String name,Object value) {
 		this.name=name;
 		this.value=value;
 	}

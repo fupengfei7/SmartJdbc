@@ -1,6 +1,12 @@
 package io.itit.smartjdbc.util;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import io.itit.smartjdbc.SmartJdbcException;
 
 /**
  * 
@@ -51,5 +57,31 @@ public class ClassUtils {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * 
+	 * @param clazz
+	 * @return
+	 */
+	public static List<Field> getFieldList(Class<?> clazz) {
+		List<Field> fields = new ArrayList<>();
+		Set<String> filedNames = new HashSet<>();
+		for (Class<?> c = clazz; c != Object.class; c = c.getSuperclass()) {
+			try {
+				Field[] list = c.getDeclaredFields();
+				for (Field field : list) {
+					String name = field.getName();
+					if (filedNames.contains(name)) {
+						continue;
+					}
+					filedNames.add(field.getName());
+					fields.add(field);
+				}
+			} catch (Exception e) {
+				throw new SmartJdbcException(e);
+			}
+		}
+		return fields;
 	}
 }

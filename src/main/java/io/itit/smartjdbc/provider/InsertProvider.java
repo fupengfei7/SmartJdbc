@@ -9,7 +9,6 @@ import java.util.TreeSet;
 import io.itit.smartjdbc.SmartJdbcException;
 import io.itit.smartjdbc.SqlBean;
 import io.itit.smartjdbc.annotations.DomainField;
-import io.itit.smartjdbc.annotations.NonPersistent;
 import io.itit.smartjdbc.util.JSONUtil;
 
 /**
@@ -44,8 +43,7 @@ public class InsertProvider extends SqlProvider{
 			if (excludesNames.contains(f.getName())) {
 				continue;
 			}
-			NonPersistent nonPersistent=f.getAnnotation(NonPersistent.class);
-			if(nonPersistent!=null) {
+			if(!isPersistentField(f)) {
 				continue;
 			}
 			DomainField domainField=f.getAnnotation(DomainField.class);

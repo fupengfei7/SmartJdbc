@@ -1,8 +1,11 @@
 package io.itit.smartjdbc.util;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
 /**
@@ -32,5 +35,26 @@ public class JSONUtil {
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> fromJsonList(String str,Class<?>t){
 		return  (List<T>) JSON.parseArray(str, t);	
+	}
+	//
+	/**
+	 * convert json string to Map
+	 * @param json
+	 * @param keyType
+	 * @param valueType
+	 * @return
+	 */
+	public static <K, V> Map<K, V> fromJsonMap(String json, Class<K> keyType,  Class<V> valueType) {
+	     return JSON.parseObject(json,new TypeReference<Map<K, V>>(keyType, valueType) {});
+	}
+	
+	/**
+	 * 
+	 * @param json
+	 * @param t
+	 * @return
+	 */
+	public static <T> Set<T> fromJsonSet(String json,Class<T>t){
+		return  JSON.parseObject(json,new TypeReference<Set<T>>(){});
 	}
 }

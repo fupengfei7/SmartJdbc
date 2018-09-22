@@ -6,7 +6,7 @@ import java.util.List;
 
 import io.itit.smartjdbc.Config;
 import io.itit.smartjdbc.DAOInterceptor;
-import io.itit.smartjdbc.Param;
+import io.itit.smartjdbc.SqlParam;
 import io.itit.smartjdbc.Query;
 import io.itit.smartjdbc.QueryWhere;
 import io.itit.smartjdbc.util.DumpUtil;
@@ -103,8 +103,8 @@ public class DAOTestCase extends BaseTestCase{
 	public void testQueryUsers2() {
 		List<User> users=dao.queryList(User.class, 
 				"select * from User where userName like concat('%',#{userName},'%') and id=#{id}", 
-				new Param("userName", "liu"),
-				new Param("id", 1));
+				new SqlParam("userName", "liu"),
+				new SqlParam("id", 1));
 		System.out.println(DumpUtil.dump(users));
 	}
 	
@@ -118,7 +118,7 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testGetUserIds() {
 		List<Integer> userIds=dao.queryForIntegers("select id from User where id=#{id}",
-				new Param("id", 1));
+				new SqlParam("id", 1));
 		System.out.println(DumpUtil.dump(userIds));
 		//
 		userIds=dao.queryForIntegers("select id from User where id=?",
@@ -129,8 +129,8 @@ public class DAOTestCase extends BaseTestCase{
 	public void testQueryUsersCount2() {
 		int count=dao.queryCount(
 				"select count(1) from User where userName like concat('%',#{userName},'%') and id=#{id}", 
-				new Param("userName", "liu"),
-				new Param("id", 1));
+				new SqlParam("userName", "liu"),
+				new SqlParam("id", 1));
 		System.out.println(count);
 	}
 	
@@ -143,7 +143,7 @@ public class DAOTestCase extends BaseTestCase{
 	
 	public void testUpdateUser2() {
 		dao.executeUpdate("update User set name='关羽0' where id=?",1);
-		dao.executeUpdate("update User set name='关羽2' where id=#{id}",new Param("id", 1));
+		dao.executeUpdate("update User set name='关羽2' where id=#{id}",new SqlParam("id", 1));
 	}
 	
 	/**删除用户*/
