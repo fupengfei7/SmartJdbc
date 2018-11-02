@@ -1,4 +1,4 @@
-# 轻量级ORM框架SmartJdbc(Spring Boot+SpringMVC+SmartJdbc)
+# 轻量级ORM框架SmartJdbc
 
 # 1 简介
 
